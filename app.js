@@ -138,7 +138,7 @@ let longPressTimer = null;
 let touchSelectionActive = false;
 let lastTouchY = 0;
 let touchStartTime = 0;
-let html5QrCodeInstance = null; // ✅ بدلاً من currentScanner
+let currentScanner = null;
 let currentPageNumber = 1;
 let itemsPerPage = 50;
 let totalFilteredItems = 0;
@@ -459,8 +459,6 @@ function selectAllMeds() { document.querySelectorAll('.med-card').forEach(card =
 function deselectAllMeds() { document.querySelectorAll('.med-card').forEach(card => { const id = parseInt(card.getAttribute('data-id')); if (selectedMeds.has(id)) toggleSelectMed(id); }); }
 async function batchDelete() { if(selectedMeds.size===0) return alert(t('batch_delete_confirm',0)); if(confirm(t('batch_delete_confirm',selectedMeds.size))){ showLoading('جاري الحذف...'); try{ for(let id of selectedMeds){ const med = await db.meds.get(id); if(med) await db.deletedMeds.add(med); await db.meds.delete(id); } selectedMeds.clear(); selectionMode=false; document.querySelectorAll('.med-card .checkbox').forEach(cb=>cb.style.display='none'); if(currentPage==='all') renderAllMedicines(); else if(currentPage==='pharmacy') renderPharmacyMedicines(); updateBarChart(); }finally{ hideLoading(); } } }
 async function batchAddToPharmacy() { if(selectedMeds.size===0) return; const medicines = []; for(let id of selectedMeds){ const med = await db.meds.get(id); if(med) medicines.push(med); } if(!medicines.length) return; showLoading('جاري الإضافة...'); let added=0; for(let med of medicines){ const newExpiry = prompt(t('please_enter_expiry')+med.name, new Date(Date.now()+30*86400000).toISOString().split('T')[0]); if(!newExpiry) continue; const newMed = { name:med.name, expiry:newExpiry, scientificName:med.scientificName||'', company:med.company||'', origin:med.origin||'', type:MED_TYPES.PHARMACY, category:med.category||'', barcode:med.barcode||'', image:med.image||null, dosageForm:med.dosageForm||'', dosage:med.dosage||'', createdAt:new Date().toISOString() }; await db.meds.add(newMed); added++; await addMedicineToGeneralIfNotExists(newMed); } hideLoading(); if(added>0){ const toast = document.createElement('div'); toast.className='offline-toast'; toast.innerText = t('batch_add_success')+` (${added})`; document.body.appendChild(toast); setTimeout(()=>toast.remove(),2000); if(currentPage==='all') renderAllMedicines(); else if(currentPage==='pharmacy') renderPharmacyMedicines(); } else alert('لم يتم إضافة أي دواء'); }
-
-// ========== الصفحة الرئيسية ==========
 function renderHome() {
     const container = document.getElementById('pageContent');
     container.innerHTML = `
@@ -600,7 +598,7 @@ function toggleBatchMode() {
 }
 function toggleSelectCompany(name){ if(selectedCompanies.has(name)) selectedCompanies.delete(name); else selectedCompanies.add(name); const card = document.querySelector(`.company-card[data-company="${escapeHtml(name)}"]`); if(card) card.classList.toggle('selected', selectedCompanies.has(name)); updateBatchRenameBtnCount(); }
 function toggleSelectCategory(name){ if(selectedCategories.has(name)) selectedCategories.delete(name); else selectedCategories.add(name); const card = document.querySelector(`.category-card[data-category="${escapeHtml(name)}"]`); if(card) card.classList.toggle('selected', selectedCategories.has(name)); updateBatchRenameCategoriesCount(); }
-async function batchRenameCompanies(){ if(!selectedCompanies.size) return alert('لم يتم تحديد شركة'); const newName = prompt('الاسم الجديد:'); if(!newName?.trim()) return; showLoading('جاري التغيير...'); try{ for(let old of selectedCompanies){ await db.meds.where('company').equals(old).modify({company:newName}); await db.deletedMeds.where('company').equals(old).modify({company:newName}); } alert(`تم تحديث ${selectedCompanies.size} شركة`); selectedCompanies.clear(); batchMode=false; renderCompaniesPage(); }catch(e){ alert('خطأ'); }finally{ hideLoading(); } }
+async function batchRenameCompanies(){ if(!selectedCompanies.size) return alert('لم يتم تحديد شركة'); const newName = prompt('الاسم الجديد:'); if(!newName?.trim()) return; showLoading(`جاري التغيير...`); try{ for(let old of selectedCompanies){ await db.meds.where('company').equals(old).modify({company:newName}); await db.deletedMeds.where('company').equals(old).modify({company:newName}); } alert(`تم تحديث ${selectedCompanies.size} شركة`); selectedCompanies.clear(); batchMode=false; renderCompaniesPage(); }catch(e){ alert('خطأ'); }finally{ hideLoading(); } }
 async function batchRenameCategories(){ if(!selectedCategories.size) return alert('لم يتم تحديد تصنيف'); const newName = prompt('الاسم الجديد:'); if(!newName?.trim()) return; showLoading(); try{ for(let old of selectedCategories){ await db.meds.where('category').equals(old).modify({category:newName}); await db.deletedMeds.where('category').equals(old).modify({category:newName}); } alert(`تم تحديث ${selectedCategories.size} تصنيف`); selectedCategories.clear(); batchMode=false; renderCategoriesPage(); }catch(e){ alert('خطأ'); }finally{ hideLoading(); } }
 async function batchDeleteCompanies(){ if(!selectedCompanies.size) return alert('لم يتم تحديد شركة'); if(!confirm(`حذف ${selectedCompanies.size} شركة وكل أدويتها؟`)) return; showLoading(); try{ for(let c of selectedCompanies){ const meds = await db.meds.where('company').equals(c).toArray(); for(let m of meds) await db.deletedMeds.add(m); await db.meds.where('company').equals(c).delete(); } alert('تم الحذف'); selectedCompanies.clear(); batchMode=false; renderCompaniesPage(); }catch(e){ alert('خطأ'); }finally{ hideLoading(); } }
 async function batchDeleteCategories(){ if(!selectedCategories.size) return alert('لم يتم تحديد تصنيف'); if(!confirm(`حذف ${selectedCategories.size} تصنيف وكل أدويته؟`)) return; showLoading(); try{ for(let c of selectedCategories){ const meds = await db.meds.where('category').equals(c).toArray(); for(let m of meds) await db.deletedMeds.add(m); await db.meds.where('category').equals(c).delete(); } alert('تم الحذف'); selectedCategories.clear(); batchMode=false; renderCategoriesPage(); }catch(e){ alert('خطأ'); }finally{ hideLoading(); } }
@@ -740,7 +738,6 @@ function renderMedicationsInList(list){
     });
 }
 
-// ========== صفحة المنتهية قريباً ==========
 async function renderExpiringSoonPage() {
     const list = await db.meds.toArray();
     const notifDays = parseInt(localStorage.getItem('notificationDays')||'7');
@@ -807,102 +804,53 @@ function renderMedicationsInExplore(list, parentDiv) {
     });
 }
 
-// ========== الكاميرا — Html5-QRCode ✅ ==========
-async function stopScannerOnly() {
-    if (html5QrCodeInstance) {
-        try {
-            const state = html5QrCodeInstance.getState();
-            if (state === 2) await html5QrCodeInstance.stop();
-        } catch (e) { console.warn('Stop warning:', e); }
-        html5QrCodeInstance = null;
-    }
+// ========== الكاميرا ==========
+async function requestCameraPermission() {
+    try { const stream = await navigator.mediaDevices.getUserMedia({ video: true }); stream.getTracks().forEach(t=>t.stop()); return true; }
+    catch(e){ console.error(e); return false; }
 }
-
 async function startBarcodeScanner(targetInputId) {
-    const modal = document.getElementById('barcodeScannerModal');
-    const resultDiv = document.getElementById('scannerResult');
-    const manualBtn = document.getElementById('manualBarcodeBtn');
-    if (!modal || !resultDiv) return;
+    const modal = document.getElementById('barcodeScannerModal'), video = document.getElementById('scannerVideo'), resultDiv = document.getElementById('scannerResult');
+    if(!modal||!video) return;
+    const hasPerm = await requestCameraPermission();
+    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا.'); return; }
     modal.setAttribute('data-target', targetInputId);
-    modal.style.display = 'flex';
-    resultDiv.innerHTML = '⏳ جاري تشغيل الكاميرا...';
-    if (manualBtn) manualBtn.style.display = 'none';
-    await stopScannerOnly();
-    const scannerDiv = document.getElementById('scannerVideo');
-    if (scannerDiv) scannerDiv.innerHTML = '';
-    html5QrCodeInstance = new Html5Qrcode('scannerVideo');
-    try {
-        await html5QrCodeInstance.start(
-            { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 250, height: 180 } },
-            (decodedText) => {
-                resultDiv.innerHTML = `✅ تم المسح: ${decodedText}`;
-                const input = document.getElementById(targetInputId);
-                if (input) input.value = decodedText;
-                stopScannerAndClose();
-            },
-            () => {}
-        );
-        resultDiv.innerHTML = '📷 وجّه الكاميرا نحو الباركود...';
-        if (manualBtn) manualBtn.style.display = 'inline-block';
-    } catch (err) {
-        console.error('Camera error:', err);
-        resultDiv.innerHTML = '❌ تعذر فتح الكاميرا';
-        if (manualBtn) manualBtn.style.display = 'inline-block';
-        html5QrCodeInstance = null;
-    }
+    modal.style.display='flex';
+    resultDiv.innerHTML='جاري تشغيل الكاميرا...';
+    if(currentScanner){ try{ currentScanner.stop(); }catch(e){} currentScanner=null; }
+    Quagga.init({ inputStream:{ name:"Live", type:"LiveStream", target:video, constraints:{ facingMode:"environment", width:640, height:480 } }, decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","code_39_reader","upc_reader","codabar_reader"] }, locate:true, numOfWorkers:navigator.hardwareConcurrency||2 }, (err) => {
+        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; return; }
+        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
+    });
+    Quagga.onDetected((data) => {
+        const code = data.codeResult.code;
+        resultDiv.innerHTML = `✅ تم مسح: ${code}`;
+        Quagga.stop(); currentScanner=null; modal.style.display='none';
+        document.getElementById(targetInputId).value = code;
+    });
 }
-
 async function startScannerForSearch() {
-    const modal = document.getElementById('barcodeScannerModal');
-    const resultDiv = document.getElementById('scannerResult');
-    const manualBtn = document.getElementById('manualBarcodeBtn');
-    if (!modal || !resultDiv) return;
-    modal.removeAttribute('data-target');
-    modal.style.display = 'flex';
-    resultDiv.innerHTML = '⏳ جاري تشغيل الكاميرا...';
-    if (manualBtn) manualBtn.style.display = 'none';
-    await stopScannerOnly();
-    const scannerDiv = document.getElementById('scannerVideo');
-    if (scannerDiv) scannerDiv.innerHTML = '';
-    html5QrCodeInstance = new Html5Qrcode('scannerVideo');
-    try {
-        await html5QrCodeInstance.start(
-            { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 250, height: 180 } },
-            async (decodedText) => {
-                resultDiv.innerHTML = `✅ تم المسح: ${decodedText}`;
-                await stopScannerOnly();
-                modal.style.display = 'none';
-                const med = await db.meds.where('barcode').equals(decodedText).first();
-                if (med) showMedDetails(med);
-                else { searchQuery = decodedText; switchPage('all'); }
-            },
-            () => {}
-        );
-        resultDiv.innerHTML = '📷 وجّه الكاميرا نحو الباركود...';
-        if (manualBtn) manualBtn.style.display = 'inline-block';
-    } catch (err) {
-        console.error('Camera error:', err);
-        resultDiv.innerHTML = '❌ تعذر فتح الكاميرا';
-        if (manualBtn) manualBtn.style.display = 'inline-block';
-        html5QrCodeInstance = null;
-    }
+    const modal = document.getElementById('barcodeScannerModal'), video = document.getElementById('scannerVideo'), resultDiv = document.getElementById('scannerResult');
+    if(!modal||!video) return;
+    const hasPerm = await requestCameraPermission();
+    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا.'); return; }
+    modal.style.display='flex'; resultDiv.innerHTML='جاري تشغيل الكاميرا...';
+    if(currentScanner){ try{ currentScanner.stop(); }catch(e){} currentScanner=null; }
+    Quagga.init({ inputStream:{ name:"Live", type:"LiveStream", target:video, constraints:{ facingMode:"environment", width:640, height:480 } }, decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","code_39_reader","upc_reader","codabar_reader"] }, locate:true, numOfWorkers:navigator.hardwareConcurrency||2 }, (err) => {
+        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; alert('تعذر الوصول إلى الكاميرا.'); return; }
+        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
+    });
+    Quagga.onDetected(async (data) => {
+        const code = data.codeResult.code;
+        resultDiv.innerHTML = `✅ تم مسح: ${code}`;
+        Quagga.stop(); currentScanner=null; modal.style.display='none';
+        const med = await db.meds.where('barcode').equals(code).first();
+        if(med) showMedDetails(med);
+        else alert('لم يتم العثور على دواء بهذا الباركود');
+    });
 }
+function stopScannerAndClose(){ if(currentScanner) currentScanner.stop(); document.getElementById('barcodeScannerModal').style.display='none'; }
 
-async function stopScannerAndClose() {
-    await stopScannerOnly();
-    const modal = document.getElementById('barcodeScannerModal');
-    if (modal) modal.style.display = 'none';
-    const scannerDiv = document.getElementById('scannerVideo');
-    if (scannerDiv) scannerDiv.innerHTML = '';
-    const resultDiv = document.getElementById('scannerResult');
-    if (resultDiv) resultDiv.innerHTML = '';
-    const manualBtn = document.getElementById('manualBarcodeBtn');
-    if (manualBtn) manualBtn.style.display = 'none';
-}
-
-// ========== نماذج الإضافة والتعديل ==========
 async function addToPharmacy(originalMed) {
     const existingCount = await db.meds.where('type').equals(MED_TYPES.PHARMACY).and(m=>m.name===originalMed.name && m.company===originalMed.company && m.dosageForm===originalMed.dosageForm && m.dosage===originalMed.dosage).count();
     if(existingCount>0 && !confirm(t('medicine_exists_in_pharmacy'))) return;
@@ -915,6 +863,7 @@ async function addToPharmacy(originalMed) {
     if(currentPage==='pharmacy') renderPharmacyMedicines(); else if(currentPage==='all') renderAllMedicines();
 }
 
+// ========== نماذج الإضافة والتعديل ==========
 function showAddFormModal(){
     isEditing=false;
     document.getElementById('medFormTitle').innerText = t('add_med');
@@ -1224,6 +1173,7 @@ async function showMedDetails(med){
     currentMed = med;
     const detailDiv = document.getElementById('medDetail');
     let expiryHtml = '';
+    // إخفاء expiry إذا كان الدواء من النوع العام (أي في صفحة كل الأدوية)
     if(med.type !== MED_TYPES.GENERAL){
         expiryHtml = `<div class="med-detail-item"><div class="med-detail-label">${t('expiry_date')}</div><div class="med-detail-value">${med.expiry}</div></div>`;
     }
@@ -1258,7 +1208,10 @@ function setupModalBackdropClose(){ document.querySelectorAll('.modal').forEach(
 
 // ========== زر العودة المتقدم ==========
 window.handleBackButton = function() {
-    if (currentPage === 'home') { showExitConfirmation(); return; }
+    if (currentPage === 'home') {
+        showExitConfirmation();
+        return;
+    }
     if (isInEditMode && currentMed) {
         showSaveChangesModal(
             async () => { await saveMedFromForm(); isInEditMode=false; currentMed=null; switchPage('home'); },
@@ -1266,7 +1219,11 @@ window.handleBackButton = function() {
         );
         return;
     }
-    if (currentCompany !== null) { currentCompany = null; renderCompaniesPage(); return; }
+    if (currentCompany !== null) {
+        currentCompany = null;
+        renderCompaniesPage();
+        return;
+    }
     if (searchQuery !== '') {
         searchQuery = '';
         if (currentPage === 'all') renderAllMedicines();
@@ -1275,8 +1232,12 @@ window.handleBackButton = function() {
         else if (currentPage === 'expiring') renderExpiringSoonPage();
         return;
     }
-    if (pageHistoryStack.length > 0) { const prev = pageHistoryStack.pop(); switchPage(prev); }
-    else { switchPage('home'); }
+    if (pageHistoryStack.length > 0) {
+        const prev = pageHistoryStack.pop();
+        switchPage(prev);
+    } else {
+        switchPage('home');
+    }
 };
 
 // ========== ربط الأزرار العامة ==========
@@ -1312,7 +1273,7 @@ window.batchAddToPharmacy = batchAddToPharmacy;
 window.addNewCategory = window.addNewCategory;
 window.addNewCompany = window.addNewCompany;
 window.addNewCategoryForList = addNewCategoryForList;
-window.handleBackButton = window.handleBackButton;
+window.handleBackButton = handleBackButton;
 window.toggleSelectCompany = toggleSelectCompany;
 window.toggleSelectCategory = toggleSelectCategory;
 window.batchRenameCompanies = batchRenameCompanies;
@@ -1361,8 +1322,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const genImage = document.getElementById('genImage');
     if(genImage) genImage.onchange = function(e){ const file = e.target.files[0]; if(file){ const reader = new FileReader(); reader.onload = (ev)=>{ document.getElementById('genImagePreview').innerHTML = `<img src="${ev.target.result}" style="max-width:100%; max-height:100%;">`; }; reader.readAsDataURL(file); } };
 
-    // ✅ ربط زر الحذف بدون inline onclick
-    document.getElementById('deleteMedBtn')?.addEventListener('click', () => { if(window.deleteCurrentMed) window.deleteCurrentMed(); });
     document.getElementById('closeMedModal')?.addEventListener('click', ()=>closeModal('medModal'));
     document.getElementById('closeMedFormModal')?.addEventListener('click', closeMedFormModal);
     document.getElementById('closeGeneralFormModal')?.addEventListener('click', closeGeneralFormModal);
@@ -1375,13 +1334,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupModalBackdropClose();
 
-    // ✅ زر الإدخال اليدوي للباركود
     const manualBtn = document.getElementById('manualBarcodeBtn');
     if(manualBtn) manualBtn.addEventListener('click', () => {
         const barcode = prompt('أدخل الباركود يدويًا:');
         if(barcode && barcode.trim()){
             const targetId = document.querySelector('#barcodeScannerModal').getAttribute('data-target');
-            const targetInput = targetId ? document.getElementById(targetId) : null;
+            const targetInput = document.getElementById(targetId);
             if(targetInput) targetInput.value = barcode.trim();
             stopScannerAndClose();
         }
