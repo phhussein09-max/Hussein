@@ -13,91 +13,31 @@ const urlsToCache = [
   'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الأساسية
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => console.error('Cache addAll error', err))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).catch(err => console.error(err))
   );
   self.skipWaiting();
 });
 
-// حذف الكاش القديم عند تفعيل نسخة جديدة
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(name => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
-        })
-      );
-    })
+    caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k))))
   );
   self.clients.claim();
 });
 
-// استراتيجية: Cache First ثم Network (للملفات الثابتة)
-// وللطلبات الديناميكية (API) يمكن استخدام Network First
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-  
-  // نسمح بمرور طلبات IndexedDB و localStorage (لا يتم اعتراضها)
-  if (event.request.url.includes('indexeddb') || event.request.url.includes('localhost')) {
-    return;
-  }
-  
-  // استراتيجية Cache First للملفات الثابتة
-  if (urlsToCache.includes(requestUrl.pathname) || 
-      requestUrl.pathname.match(/\.(css|js|html|png|jpg|jpeg|gif|svg)$/)) {
+  const url = new URL(event.request.url);
+  if (url.pathname.match(/\.(css|js|html|json|png|jpg)$/) || urlsToCache.includes(url.pathname)) {
     event.respondWith(
-      caches.match(event.request)
-        .then(response => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request).then(networkResponse => {
-            if (networkResponse && networkResponse.status === 200) {
-              const responseClone = networkResponse.clone();
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, responseClone);
-              });
-            }
-            return networkResponse;
-          }).catch(() => {
-            // إذا فشل الشبكة وليس لدينا كاش، نعرض صفحة الأوفلاين
-            if (event.request.mode === 'navigate') {
-              return caches.match('/offline.html');
-            }
-            return new Response('غير متصل بالإنترنت', { status: 503 });
-          });
-        })
-    );
-  } else {
-    // Network First للمحتوى الديناميكي (يمكن تعديله حسب الحاجة)
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            if (event.request.mode === 'navigate') {
-              return caches.match('/offline.html');
-            }
-            return new Response('غير متصل بالإنترنت', { status: 503 });
-          });
-        })
+      caches.match(event.request).then(response => response || fetch(event.request).then(res => {
+        if (res.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, res.clone()));
+        return res;
+      }).catch(() => {
+        if (event.request.mode === 'navigate') return caches.match('/offline.html');
+        return new Response('غير متصل', { status: 503 });
+      }))
     );
   }
 });
