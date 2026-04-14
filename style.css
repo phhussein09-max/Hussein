@@ -8,14 +8,19 @@
 :root {
     --primary: #2a9d8f;
     --primary-dark: #21867a;
+    --primary-light: #e6f4f2;
     --danger: #e76f51;
+    --danger-dark: #d45a3a;
     --warning: #f4a261;
+    --warning-dark: #e08d3a;
     --success: #2a9d8f;
     --bg: #f8f9fa;
     --card-bg: #ffffff;
     --text: #212529;
+    --text-muted: #6c757d;
     --border: #dee2e6;
     --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-hover: 0 6px 16px rgba(0,0,0,0.12);
     --header-bg: #2a9d8f;
     --header-text: white;
 }
@@ -24,9 +29,11 @@ body.dark {
     --bg: #121212;
     --card-bg: #1e1e2f;
     --text: #e0e0e0;
+    --text-muted: #a0a0a0;
     --border: #2c2c3a;
-    --header-bg: #1e1e2f;
+    --header-bg: #1a2a2a;
     --header-text: #e0e0e0;
+    --primary-light: #1e3a3a;
 }
 
 body {
@@ -39,11 +46,11 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
-/* header */
+/* ===== الهيدر ===== */
 .app-header {
     background: var(--header-bg);
     color: var(--header-text);
-    padding: 16px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -53,37 +60,55 @@ body {
     box-shadow: var(--shadow);
 }
 
+.header-left, .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 70px;
+}
+
+.header-left {
+    justify-content: flex-start;
+}
+
+.header-right {
+    justify-content: flex-end;
+}
+
 .app-header h1 {
-    font-size: 1.4rem;
-    flex: 1;
-    text-align: center;
-    cursor: pointer;
+    font-size: 1.3rem;
     margin: 0;
+    text-align: center;
+    flex: 1;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .header-btn {
-    background: none;
+    background: rgba(255,255,255,0.15);
     border: none;
     color: var(--header-text);
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     cursor: pointer;
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .header-btn:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.02);
 }
 
 #backBtn {
-    display: none;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: bold;
+    display: none;
 }
 
 .notif-badge {
@@ -92,150 +117,103 @@ body {
 
 .badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -4px;
+    right: -4px;
     background: var(--danger);
     color: white;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* main content */
-.page-content {
-    padding: 16px;
-}
-
-/* search wrapper */
-.search-wrapper {
-    display: flex;
-    gap: 8px;
-    background: var(--card-bg);
+/* ===== أزرار عامة ===== */
+button, .btn, .main-btn, .small-btn, .primary-btn, .secondary-btn, .danger-btn, .cancel-btn {
     border-radius: 40px;
-    padding: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 16px;
+    border: none;
+    padding: 10px 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.search-wrapper input {
+button:active, .btn:active {
+    transform: scale(0.97);
+}
+
+.primary-btn {
+    background: var(--primary);
+    color: white;
+    border: 1px solid var(--primary-dark);
+}
+.primary-btn:hover { background: var(--primary-dark); }
+
+.secondary-btn {
+    background: var(--warning);
+    color: white;
+    border: 1px solid var(--warning-dark);
+}
+.secondary-btn:hover { background: var(--warning-dark); }
+
+.danger-btn {
+    background: var(--danger);
+    color: white;
+    border: 1px solid var(--danger-dark);
+}
+.danger-btn:hover { background: var(--danger-dark); }
+
+.cancel-btn {
+    background: var(--border);
+    color: var(--text);
+    border: 1px solid var(--text-muted);
+}
+.cancel-btn:hover { background: var(--text-muted); color: white; }
+
+/* ===== تحسين البحث ===== */
+.dashboard-search {
+    margin-bottom: 20px;
+}
+.dashboard-search .search-wrapper {
+    display: flex;
+    gap: 10px;
+    background: var(--card-bg);
+    border-radius: 60px;
+    padding: 5px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+.dashboard-search .search-wrapper input {
     flex: 1;
     border: none;
-    padding: 12px 20px;
-    border-radius: 40px;
+    padding: 14px 20px;
+    border-radius: 60px;
     background: transparent;
     font-size: 1rem;
     outline: none;
     color: var(--text);
 }
-
-.search-wrapper button {
+.dashboard-search .search-wrapper input::placeholder {
+    color: var(--text-muted);
+}
+.dashboard-search .search-wrapper button {
     background: var(--primary);
     border: none;
     color: white;
-    padding: 8px 20px;
-    border-radius: 40px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-
-.search-wrapper button:hover {
-    background: var(--primary-dark);
-}
-
-.suggestions-list {
-    position: absolute;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 200;
-    width: calc(100% - 32px);
-    display: none;
-    box-shadow: var(--shadow);
-}
-
-.suggestions-list.show {
-    display: block;
-}
-
-.suggestion-item {
-    padding: 10px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border);
-}
-
-.suggestion-item:hover {
-    background: var(--primary);
-    color: white;
-}
-
-/* filters bar - horizontal */
-.filters-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-start;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.filters-bar select, .filters-bar button {
-    padding: 8px 12px;
-    border-radius: 30px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.filters-bar .plus-icon-btn, .filters-bar .batch-delete-btn, .filters-bar .select-all-btn, .filters-bar .deselect-all-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-}
-
-.filters-bar .recycle-bin-btn {
-    background: var(--warning);
-    color: white;
-    border: none;
-}
-
-/* main buttons grid */
-.main-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.main-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 40px;
-    font-size: 1rem;
+    padding: 10px 24px;
+    border-radius: 60px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
 }
 
-.main-btn:active {
-    transform: scale(0.97);
-}
-
-/* cards */
+/* ===== البطاقات ===== */
 .med-card, .company-card, .category-card {
     background: var(--card-bg);
-    border-radius: 16px;
-    padding: 12px;
+    border-radius: 20px;
+    padding: 14px;
     margin-bottom: 12px;
     display: flex;
     align-items: center;
@@ -243,116 +221,80 @@ body {
     box-shadow: var(--shadow);
     transition: all 0.2s;
     cursor: pointer;
-    position: relative;
+    border: 1px solid var(--border);
+}
+.med-card:hover, .company-card:hover, .category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
 }
 
-.med-card.selected, .company-card.selected, .category-card.selected {
-    background: rgba(42, 157, 143, 0.2);
-    border: 2px solid var(--primary);
-}
-
-.med-card .checkbox, .company-card .checkbox, .category-card .checkbox {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid var(--primary);
-    background: white;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    margin-left: 12px;
-}
-
-.med-card.selected .checkbox::after, .company-card.selected .checkbox::after, .category-card.selected .checkbox::after {
-    content: "✓";
-    color: var(--primary);
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.med-info {
+/* ===== تفاصيل الدواء ===== */
+.med-detail {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
-    flex: 1;
 }
-
-.med-image-thumb {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    background: var(--border);
+.med-detail-item {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    overflow: hidden;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
 }
-
-.med-image-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.med-text {
-    flex: 1;
-}
-
-.med-name {
+.med-detail-label {
     font-weight: bold;
-    font-size: 1rem;
+    color: var(--primary);
+    width: 35%;
+}
+.med-detail-value {
+    width: 65%;
+    text-align: left;
+    word-break: break-word;
+}
+.med-image {
+    margin-top: 12px;
+    text-align: center;
+}
+.med-image img {
+    max-width: 100%;
+    border-radius: 16px;
+    max-height: 200px;
+    object-fit: contain;
 }
 
-.delete-button {
-    background: none;
-    border: none;
+/* ===== شريط الفلاتر ===== */
+.filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.filters-bar select, .filters-bar button {
+    padding: 8px 16px;
+    border-radius: 40px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    font-size: 0.9rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.delete-button:hover {
-    opacity: 1;
-}
-
-.trash-bin-icon {
-    width: 24px;
-    height: 24px;
-    position: relative;
-}
-
-/* stats */
+/* ===== إحصائيات ===== */
 .stats-box {
     background: var(--card-bg);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 24px;
+    padding: 20px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-top: 16px;
-    text-align: center;
+    gap: 16px;
+    margin-top: 20px;
+    border: 1px solid var(--border);
 }
 
-/* companies grid */
-.companies-grid, .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-}
-
-.company-card, .category-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-}
-
-.medicine-count {
-    font-size: 0.8rem;
-    color: var(--primary);
-}
-
-/* pagination */
+/* ===== ترقيم الصفحات ===== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -361,33 +303,20 @@ body {
     margin-top: 16px;
     flex-wrap: wrap;
 }
-
 .pagination button {
-    padding: 6px 12px;
-    border-radius: 30px;
+    padding: 8px 16px;
+    border-radius: 40px;
     border: 1px solid var(--border);
     background: var(--card-bg);
     cursor: pointer;
+    font-weight: 500;
 }
-
 .pagination button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.page-info {
-    padding: 6px 12px;
-}
-
-/* chart */
-.chart-container {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 20px;
-}
-
-/* modals */
+/* ===== نماذج ===== */
 .modal {
     position: fixed;
     top: 0;
@@ -401,7 +330,6 @@ body {
     z-index: 1000;
     padding: 16px;
 }
-
 .modal-content {
     background: var(--card-bg);
     border-radius: 24px;
@@ -412,14 +340,12 @@ body {
     padding: 20px;
     position: relative;
 }
-
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
 }
-
 .close-btn {
     background: none;
     border: none;
@@ -427,17 +353,14 @@ body {
     cursor: pointer;
     color: var(--text);
 }
-
 .form-group {
     margin-bottom: 16px;
 }
-
 .form-group label {
     display: block;
     margin-bottom: 6px;
     font-weight: bold;
 }
-
 .form-group input, .form-group select {
     width: 100%;
     padding: 10px;
@@ -446,14 +369,12 @@ body {
     background: var(--bg);
     color: var(--text);
 }
-
 .image-preview {
     margin-top: 8px;
     max-height: 100px;
     overflow: hidden;
     border-radius: 12px;
 }
-
 .modal-buttons {
     display: flex;
     gap: 10px;
@@ -461,59 +382,29 @@ body {
     margin-top: 20px;
     flex-wrap: wrap;
 }
-
-.primary-btn, .secondary-btn, .danger-btn, .cancel-btn {
-    padding: 10px 20px;
-    border-radius: 40px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.primary-btn {
+.small-btn {
     background: var(--primary);
     color: white;
-}
-
-.secondary-btn {
-    background: var(--warning);
-    color: white;
-}
-
-.danger-btn {
-    background: var(--danger);
-    color: white;
-}
-
-.cancel-btn {
-    background: var(--border);
-    color: var(--text);
-}
-
-.small-btn {
     padding: 6px 12px;
     border-radius: 30px;
-    background: var(--primary);
-    color: white;
     border: none;
     cursor: pointer;
 }
 
-/* loading overlay */
+/* ===== تحميل ===== */
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 2000;
 }
-
 .loading-spinner {
     width: 50px;
     height: 50px;
@@ -522,17 +413,14 @@ body {
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-
 .loading-text {
     margin-top: 16px;
     color: white;
 }
 
-/* empty state */
 .empty-state {
     text-align: center;
     padding: 40px;
@@ -540,7 +428,6 @@ body {
     opacity: 0.7;
 }
 
-/* offline toast */
 .offline-toast {
     position: fixed;
     bottom: 20px;
@@ -554,14 +441,12 @@ body {
     z-index: 1500;
     animation: fadeOut 3s forwards;
 }
-
 @keyframes fadeOut {
     0% { opacity: 1; }
     70% { opacity: 1; }
     100% { opacity: 0; visibility: hidden; }
 }
 
-/* batch expiry modal */
 .batch-expiry-item {
     display: flex;
     justify-content: space-between;
@@ -571,7 +456,6 @@ body {
     background: var(--bg);
     border-radius: 12px;
 }
-
 .batch-expiry-item input {
     width: 140px;
     padding: 6px;
@@ -579,15 +463,11 @@ body {
     border: 1px solid var(--border);
 }
 
-/* responsive */
 @media (max-width: 480px) {
     .filters-bar {
         justify-content: center;
     }
-    .main-buttons {
-        grid-template-columns: 1fr 1fr;
-    }
     .stats-box {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
 }
