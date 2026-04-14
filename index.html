@@ -9,9 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="style.css">
-    <!-- المكتبات الخارجية -->
+    <!-- المكتبات -->
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -20,16 +19,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
-    <!-- شريط التطبيق -->
+    <!-- الهيدر -->
     <div class="app-header">
-        <button id="backBtn" class="header-btn" aria-label="رجوع">←</button>
+        <div class="header-left">
+            <button id="backBtn" class="header-btn back-btn" aria-label="رجوع">←</button>
+            <button id="settingsHeaderBtn" class="header-btn settings-btn" aria-label="الإعدادات">⚙️</button>
+        </div>
         <h1 id="appTitle">مدير الصيدلية</h1>
-        <div style="display: flex; gap: 8px;">
+        <div class="header-right">
             <button id="notifBtn" class="header-btn notif-badge" aria-label="الإشعارات">
                 🔔
                 <span id="notifBadge" class="badge" style="display: none;">0</span>
             </button>
-            <button id="settingsHeaderBtn" class="header-btn" aria-label="الإعدادات">⚙️</button>
         </div>
     </div>
 
@@ -51,9 +52,9 @@
             </div>
             <div id="medDetail" class="med-detail"></div>
             <div class="modal-buttons">
-                <button id="addToPharmacyBtn" class="primary-btn">➕ إضافة للصيدلية</button>
-                <button id="editMedBtn" class="secondary-btn">✏️ تعديل</button>
-                <button id="deleteMedBtn" class="danger-btn">🗑️ حذف</button>
+                <button id="addToPharmacyBtn" class="primary-btn">إضافة للصيدلية</button>
+                <button id="editMedBtn" class="secondary-btn">تعديل</button>
+                <button id="deleteMedBtn" class="danger-btn">حذف</button>
                 <button id="cancelMedBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
@@ -86,7 +87,7 @@
                 <label>التصنيف</label>
                 <input type="text" id="medCategory" list="medCategoriesList" placeholder="اختر أو اكتب تصنيفاً">
                 <datalist id="medCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('medCategory')">➕ إضافة تصنيف جديد</button>
+                <button type="button" class="small-btn" onclick="addNewCategory('medCategory')">إضافة تصنيف جديد</button>
             </div>
             <div class="form-group">
                 <label>الشكل الدوائي</label>
@@ -112,7 +113,7 @@
                 <label>الباركود</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="medBarcode" placeholder="مسح أو إدخال يدوي">
-                    <button type="button" id="scanBarcodeBtn" class="small-btn">📷 مسح</button>
+                    <button type="button" id="scanBarcodeBtn" class="small-btn">مسح</button>
                 </div>
             </div>
             <div class="form-group">
@@ -154,7 +155,7 @@
                 <label>التصنيف</label>
                 <input type="text" id="genCategory" list="genCategoriesList">
                 <datalist id="genCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('genCategory')">➕ إضافة تصنيف جديد</button>
+                <button type="button" class="small-btn" onclick="addNewCategory('genCategory')">إضافة تصنيف جديد</button>
             </div>
             <div class="form-group">
                 <label>الشكل الدوائي</label>
@@ -168,7 +169,7 @@
                 <label>الباركود</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="genBarcode">
-                    <button type="button" id="scanBarcodeGenBtn" class="small-btn">📷 مسح</button>
+                    <button type="button" id="scanBarcodeGenBtn" class="small-btn">مسح</button>
                 </div>
             </div>
             <div class="form-group">
@@ -193,7 +194,7 @@
             <video id="scannerVideo" style="width: 100%; border-radius: 12px;"></video>
             <div id="scannerResult" class="scanner-result"></div>
             <div class="modal-buttons">
-                <button id="manualBarcodeBtn" class="secondary-btn">📝 إدخال يدوي</button>
+                <button id="manualBarcodeBtn" class="secondary-btn">إدخال يدوي</button>
                 <button id="cancelScannerBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
@@ -237,7 +238,6 @@
 
     <script src="app.js"></script>
     <script>
-        // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(reg => {
                 console.log('Service Worker registered', reg);
