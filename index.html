@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>مدير الصيدلية - Pharmacy Manager</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2a9d8f">
+    <meta name="theme-color" content="#2c7da0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
     <link rel="stylesheet" href="style.css">
-    <!-- المكتبات -->
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -19,25 +18,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
-    <!-- الهيدر -->
     <div class="app-header">
         <div class="header-left">
-            <button id="backBtn" class="header-btn back-btn" aria-label="رجوع">←</button>
-            <button id="settingsHeaderBtn" class="header-btn settings-btn" aria-label="الإعدادات">⚙️</button>
+            <button id="backBtn" class="header-btn back-btn">←</button>
+            <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
         </div>
         <h1 id="appTitle">مدير الصيدلية</h1>
         <div class="header-right">
-            <button id="notifBtn" class="header-btn notif-badge" aria-label="الإشعارات">
+            <button id="notifBtn" class="header-btn notif-badge">
                 🔔
                 <span id="notifBadge" class="badge" style="display: none;">0</span>
             </button>
         </div>
     </div>
 
-    <!-- المحتوى الرئيسي -->
     <div id="pageContent" class="page-content"></div>
 
-    <!-- طبقة التحميل -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
         <div id="loadingText" class="loading-text">جاري التحميل...</div>
@@ -48,7 +44,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>تفاصيل الدواء</h3>
-                <button id="closeMedModal" class="close-btn">&times;</button>
+                <button id="closeMedModal" class="close-btn">×</button>
             </div>
             <div id="medDetail" class="med-detail"></div>
             <div class="modal-buttons">
@@ -65,7 +61,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="medFormTitle">إضافة دواء</h3>
-                <button id="closeMedFormModal" class="close-btn">&times;</button>
+                <button id="closeMedFormModal" class="close-btn">×</button>
             </div>
             <div class="form-group">
                 <label>الاسم التجاري *</label>
@@ -91,7 +87,7 @@
             </div>
             <div class="form-group">
                 <label>الشكل الدوائي</label>
-                <input type="text" id="dosageForm" placeholder="مثال: أقراص، شراب، مرهم">
+                <input type="text" id="dosageForm" placeholder="مثال: أقراص">
             </div>
             <div class="form-group">
                 <label>الجرعة</label>
@@ -113,7 +109,7 @@
                 <label>الباركود</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="medBarcode" placeholder="مسح أو إدخال يدوي">
-                    <button type="button" id="scanBarcodeBtn" class="small-btn">مسح</button>
+                    <button type="button" id="scanBarcodeBtn" class="small-btn">📷 مسح</button>
                 </div>
             </div>
             <div class="form-group">
@@ -133,7 +129,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="generalFormTitle">إضافة دواء عام</h3>
-                <button id="closeGeneralFormModal" class="close-btn">&times;</button>
+                <button id="closeGeneralFormModal" class="close-btn">×</button>
             </div>
             <div class="form-group">
                 <label>الاسم التجاري *</label>
@@ -169,7 +165,7 @@
                 <label>الباركود</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="genBarcode">
-                    <button type="button" id="scanBarcodeGenBtn" class="small-btn">مسح</button>
+                    <button type="button" id="scanBarcodeGenBtn" class="small-btn">📷 مسح</button>
                 </div>
             </div>
             <div class="form-group">
@@ -189,7 +185,7 @@
         <div class="modal-content" style="max-width: 90%;">
             <div class="modal-header">
                 <h3>مسح الباركود</h3>
-                <button id="closeScannerModal" class="close-btn">&times;</button>
+                <button id="closeScannerModal" class="close-btn">×</button>
             </div>
             <video id="scannerVideo" style="width: 100%; border-radius: 12px;"></video>
             <div id="scannerResult" class="scanner-result"></div>
@@ -205,7 +201,7 @@
         <div class="modal-content" style="max-width: 90%;">
             <div class="modal-header">
                 <h3>الإعدادات</h3>
-                <button id="closeSettingsModal" class="close-btn">&times;</button>
+                <button id="closeSettingsModal" class="close-btn">×</button>
             </div>
             <div id="settingsContent"></div>
         </div>
@@ -223,7 +219,7 @@
         </div>
     </div>
 
-    <!-- مودال حفظ التغييرات عند الرجوع -->
+    <!-- مودال حفظ التغييرات -->
     <div id="saveChangesModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3>هل تريد حفظ التغييرات؟</h3>
@@ -239,11 +235,7 @@
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                console.log('Service Worker registered', reg);
-            }).catch(err => {
-                console.error('Service Worker registration failed', err);
-            });
+            navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
         }
     </script>
 </body>
