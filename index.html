@@ -2,243 +2,156 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>مدير الصيدلية - Pharmacy Manager</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2a9d8f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="style.css">
-    <!-- المكتبات -->
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
-    <!-- شريط التطبيق -->
     <div class="app-header">
-        <button id="backBtn" class="header-btn" style="display: none;">←</button>
-        <button id="settingsHeaderBtn" class="header-btn">⚙️</button>
-        <h1 id="appTitle">مدير الصيدلية</h1>
-        <button id="notifBtn" class="header-btn notif-badge">🔔<span id="notifBadge" class="badge" style="display: none;">0</span></button>
+        <div id="appTitle" class="app-title">مدير الصيدلية</div>
+        <div style="display: flex; gap: 12px;">
+            <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
+            <button id="settingsHeaderBtn" class="header-btn">⚙️</button>
+        </div>
     </div>
-
-    <!-- المحتوى الرئيسي -->
     <div id="pageContent" class="page-content"></div>
 
-    <!-- طبقة التحميل -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <div id="loadingText" class="loading-text">جاري التحميل...</div>
-    </div>
-
-    <!-- مودال تفاصيل الدواء -->
-    <div id="medModal" class="modal" style="display: none;">
+    <!-- نافذة تفاصيل الدواء -->
+    <div id="medModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>تفاصيل الدواء</h3>
-                <button id="closeMedModal" class="close-btn">&times;</button>
-            </div>
-            <div id="medDetail" class="med-detail"></div>
-            <div class="modal-buttons">
-                <button id="addToPharmacyBtn" class="primary-btn">➕ إضافة للصيدلية</button>
-                <button id="editMedBtn" class="secondary-btn">✏️ تعديل</button>
-                <button id="deleteMedBtn" class="danger-btn">🗑️ حذف</button>
-                <button id="cancelMedBtn" class="cancel-btn">إلغاء</button>
+            <span class="close-modal" id="closeMedModal">✖</span>
+            <h3>📋 تفاصيل الدواء</h3>
+            <div id="medDetail"></div>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button id="editMedBtn" class="edit-btn">✏️ تعديل</button>
+                <button id="addToPharmacyBtn" class="save-btn">➕ إضافة إلى الصيدلية</button>
+                <button id="deleteMedBtn" class="delete-btn" onclick="window.deleteCurrentMed()">🗑️ حذف</button>
+                <button id="cancelMedBtn" class="cancel-btn">إغلاق</button>
             </div>
         </div>
     </div>
 
-    <!-- مودال إضافة/تعديل دواء (الصيدلية) -->
-    <div id="medFormModal" class="modal" style="display: none;">
+    <!-- نافذة إضافة/تعديل دواء (صيدلية) -->
+    <div id="medFormModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="medFormTitle">إضافة دواء</h3>
-                <button id="closeMedFormModal" class="close-btn">&times;</button>
-            </div>
-            <div class="form-group">
-                <label>الاسم التجاري *</label>
-                <input type="text" id="medName" placeholder="مثال: Panadol">
-            </div>
-            <div class="form-group">
-                <label>الاسم العلمي</label>
-                <input type="text" id="scientificName" placeholder="مثال: Paracetamol">
-            </div>
-            <div class="form-group">
-                <label>الشركة</label>
-                <input type="text" id="company" placeholder="مثال: GSK">
-            </div>
-            <div class="form-group">
-                <label>المنشأ</label>
-                <input type="text" id="origin" placeholder="مثال: ألمانيا">
-            </div>
-            <div class="form-group">
-                <label>التصنيف</label>
-                <input type="text" id="medCategory" list="medCategoriesList" placeholder="اختر أو اكتب تصنيفاً">
-                <datalist id="medCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('medCategory')">➕ إضافة تصنيف جديد</button>
-            </div>
-            <div class="form-group">
-                <label>الشكل الدوائي</label>
-                <input type="text" id="dosageForm" placeholder="مثال: أقراص، شراب، مرهم">
-            </div>
-            <div class="form-group">
-                <label>الجرعة</label>
-                <input type="text" id="dosage" placeholder="مثال: 500mg">
-            </div>
-            <div class="form-group">
-                <label>تاريخ الانتهاء 1 *</label>
-                <input type="date" id="medExpiry1">
-            </div>
-            <div class="form-group">
-                <label>تاريخ الانتهاء 2</label>
-                <input type="date" id="medExpiry2">
-            </div>
-            <div class="form-group">
-                <label>تاريخ الانتهاء 3</label>
-                <input type="date" id="medExpiry3">
-            </div>
-            <div class="form-group">
-                <label>الباركود</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="medBarcode" placeholder="مسح أو إدخال يدوي">
-                    <button type="button" id="scanBarcodeBtn" class="small-btn">📷 مسح</button>
+            <span class="close-modal" id="closeMedFormModal">✖</span>
+            <h3 id="medFormTitle">إضافة دواء</h3>
+            <div class="form-container">
+                <div class="form-row"><input type="text" id="medName" placeholder="الاسم التجاري *" class="form-input"></div>
+                <div class="form-row"><input type="text" id="scientificName" placeholder="الاسم العلمي" class="form-input"></div>
+                <div class="form-row"><input type="text" id="company" placeholder="الشركة" class="form-input"><input type="text" id="origin" placeholder="المنشأ" class="form-input"></div>
+                <div class="form-row">
+                    <input type="text" id="medCategory" list="medCategoriesList" placeholder="التصنيف" class="form-input">
+                    <datalist id="medCategoriesList"></datalist>
+                    <button type="button" class="small-btn" onclick="window.addNewCategory('medCategory')">➕ تصنيف جديد</button>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>صورة الدواء</label>
-                <input type="file" id="medImage" accept="image/*">
-                <div id="imagePreview" class="image-preview"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="submitMedBtn" class="primary-btn">حفظ</button>
-                <button id="cancelMedFormBtn" class="cancel-btn">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- مودال إضافة دواء عام (كل الأدوية) -->
-    <div id="generalFormModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="generalFormTitle">إضافة دواء عام</h3>
-                <button id="closeGeneralFormModal" class="close-btn">&times;</button>
-            </div>
-            <div class="form-group">
-                <label>الاسم التجاري *</label>
-                <input type="text" id="genName">
-            </div>
-            <div class="form-group">
-                <label>الاسم العلمي</label>
-                <input type="text" id="genScientificName">
-            </div>
-            <div class="form-group">
-                <label>الشركة</label>
-                <input type="text" id="genCompany">
-            </div>
-            <div class="form-group">
-                <label>المنشأ</label>
-                <input type="text" id="genOrigin">
-            </div>
-            <div class="form-group">
-                <label>التصنيف</label>
-                <input type="text" id="genCategory" list="genCategoriesList">
-                <datalist id="genCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('genCategory')">➕ إضافة تصنيف جديد</button>
-            </div>
-            <div class="form-group">
-                <label>الشكل الدوائي</label>
-                <input type="text" id="genDosageForm">
-            </div>
-            <div class="form-group">
-                <label>الجرعة</label>
-                <input type="text" id="genDosage">
-            </div>
-            <div class="form-group">
-                <label>الباركود</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="genBarcode">
-                    <button type="button" id="scanBarcodeGenBtn" class="small-btn">📷 مسح</button>
+                <div class="form-row"><input type="text" id="dosageForm" placeholder="الشكل الدوائي" class="form-input"><input type="text" id="dosage" placeholder="الجرعة" class="form-input"></div>
+                <div class="form-row">
+                    <input type="date" id="medExpiry1" class="form-input"><label>تاريخ الانتهاء 1 *</label>
+                    <input type="date" id="medExpiry2" class="form-input"><label>تاريخ الانتهاء 2</label>
+                    <input type="date" id="medExpiry3" class="form-input"><label>تاريخ الانتهاء 3</label>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>صورة الدواء</label>
-                <input type="file" id="genImage" accept="image/*">
-                <div id="genImagePreview" class="image-preview"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="submitGeneralBtn" class="primary-btn">حفظ</button>
-                <button id="cancelGeneralFormBtn" class="cancel-btn">إلغاء</button>
+                <div class="form-row"><input type="text" id="medBarcode" placeholder="الباركود" class="form-input"><button type="button" class="small-btn" id="scanBarcodeBtn">📷 مسح باركود</button></div>
+                <div class="form-row image-upload"><label class="image-upload-label">📷 اختر صورة<input type="file" id="medImage" accept="image/*" style="display: none;"></label><div id="imagePreview" class="image-preview"></div></div>
+                <div class="form-actions"><button id="submitMedBtn" class="save-btn">حفظ</button><button id="cancelMedFormBtn" class="cancel-btn">إلغاء</button></div>
             </div>
         </div>
     </div>
 
-    <!-- مودال مسح الباركود -->
-    <div id="barcodeScannerModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 90%;">
-            <div class="modal-header">
-                <h3>مسح الباركود</h3>
-                <button id="closeScannerModal" class="close-btn">&times;</button>
+    <!-- نافذة إضافة دواء عام (بدون expiry) -->
+    <div id="generalFormModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeGeneralFormModal">✖</span>
+            <h3 id="generalFormTitle">إضافة دواء (عام)</h3>
+            <div class="form-container">
+                <div class="form-row"><input type="text" id="genName" placeholder="الاسم التجاري *" class="form-input"></div>
+                <div class="form-row"><input type="text" id="genScientificName" placeholder="الاسم العلمي" class="form-input"></div>
+                <div class="form-row"><input type="text" id="genCompany" placeholder="الشركة" class="form-input"><input type="text" id="genOrigin" placeholder="المنشأ" class="form-input"></div>
+                <div class="form-row">
+                    <input type="text" id="genCategory" list="genCategoriesList" placeholder="التصنيف" class="form-input">
+                    <datalist id="genCategoriesList"></datalist>
+                    <button type="button" class="small-btn" onclick="window.addNewCategory('genCategory')">➕ تصنيف جديد</button>
+                </div>
+                <div class="form-row"><input type="text" id="genDosageForm" placeholder="الشكل الدوائي" class="form-input"><input type="text" id="genDosage" placeholder="الجرعة" class="form-input"></div>
+                <div class="form-row"><input type="text" id="genBarcode" placeholder="الباركود" class="form-input"><button type="button" class="small-btn" id="scanBarcodeGenBtn">📷 مسح باركود</button></div>
+                <div class="form-row image-upload"><label class="image-upload-label">📷 اختر صورة<input type="file" id="genImage" accept="image/*" style="display: none;"></label><div id="genImagePreview" class="image-preview"></div></div>
+                <div class="form-actions"><button id="submitGeneralBtn" class="save-btn">حفظ الدواء</button><button id="cancelGeneralFormBtn" class="cancel-btn">إلغاء</button></div>
             </div>
-            <video id="scannerVideo" style="width: 100%; border-radius: 12px;"></video>
-            <div id="scannerResult" class="scanner-result"></div>
-            <div class="modal-buttons">
-                <button id="manualBarcodeBtn" class="secondary-btn">📝 إدخال يدوي</button>
+        </div>
+    </div>
+
+    <!-- نافذة مسح الباركود -->
+    <div id="barcodeScannerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeScannerModal">✖</span>
+            <h3>📷 مسح الباركود</h3>
+            <video id="scannerVideo" autoplay playsinline style="width:100%; border-radius:16px;"></video>
+            <div id="scannerResult" style="margin-top:10px; text-align:center;"></div>
+            <div style="display: flex; gap: 8px; margin-top: 12px; justify-content: center;">
+                <button id="manualBarcodeBtn" class="small-btn">📝 إدخال يدوي</button>
                 <button id="cancelScannerBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- مودال الإعدادات -->
-    <div id="settingsModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 90%;">
-            <div class="modal-header">
-                <h3>الإعدادات</h3>
-                <button id="closeSettingsModal" class="close-btn">&times;</button>
-            </div>
+    <!-- نافذة الإعدادات -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeSettingsModal">✖</span>
+            <h3>⚙️ الإعدادات</h3>
             <div id="settingsContent"></div>
         </div>
     </div>
 
-    <!-- مودال تأكيد الخروج -->
-    <div id="exitConfirmModal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <!-- نافذة تأكيد الخروج -->
+    <div id="exitConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
             <h3>تأكيد الخروج</h3>
-            <p>هل تريد إغلاق التطبيق؟</p>
-            <div class="modal-buttons">
-                <button id="confirmExitBtn" class="danger-btn">نعم، إغلاق</button>
+            <p style="margin: 20px 0;">هل تريد الخروج من التطبيق؟</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="confirmExitBtn" class="save-btn">نعم</button>
                 <button id="cancelExitBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- مودال حفظ التغييرات عند الرجوع -->
-    <div id="saveChangesModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h3>هل تريد حفظ التغييرات؟</h3>
-            <p>لديك تغييرات غير محفوظة على الدواء الحالي.</p>
-            <div class="modal-buttons">
-                <button id="saveAndExitBtn" class="primary-btn">حفظ وخروج</button>
-                <button id="exitWithoutSaveBtn" class="danger-btn">خروج بدون حفظ</button>
-                <button id="cancelSaveExitBtn" class="cancel-btn">إلغاء</button>
+    <!-- نافذة حفظ التغييرات -->
+    <div id="saveChangesModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3>تأكيد</h3>
+            <p style="margin: 20px 0;">هل تريد حفظ التغييرات قبل الخروج؟</p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button id="saveAndExitBtn" class="save-btn">حفظ وخروج</button>
+                <button id="exitWithoutSaveBtn" class="cancel-btn">خروج بدون حفظ</button>
+                <button id="cancelSaveExitBtn" class="save-btn" style="background: var(--primary);">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- ملف الجافاسكريبت الرئيسي -->
+    <!-- نافذة التحميل -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div id="loadingText" class="loading-text">جاري التحميل...</div>
+    </div>
+
     <script src="app.js"></script>
     <script>
-        // تسجيل Service Worker للعمل دون اتصال
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                console.log('Service Worker registered', reg);
-            }).catch(err => {
-                console.error('Service Worker registration failed', err);
-            });
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered:', reg))
+                .catch(err => console.log('Service Worker registration failed:', err));
         }
     </script>
 </body>
