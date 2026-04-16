@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>مدير الصيدلية - Pharmacy Manager</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c7da0">
+    <meta name="theme-color" content="#2a9d8f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
     <link rel="stylesheet" href="style.css">
+    <!-- المكتبات -->
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -18,22 +19,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
+    <!-- شريط التطبيق -->
     <div class="app-header">
-        <div class="header-left">
-            <button id="backBtn" class="header-btn back-btn">←</button>
-            <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
-        </div>
+        <button id="backBtn" class="header-btn" style="display: none;">←</button>
+        <button id="settingsHeaderBtn" class="header-btn">⚙️</button>
         <h1 id="appTitle">مدير الصيدلية</h1>
-        <div class="header-right">
-            <button id="notifBtn" class="header-btn notif-badge">
-                🔔
-                <span id="notifBadge" class="badge" style="display: none;">0</span>
-            </button>
-        </div>
+        <button id="notifBtn" class="header-btn notif-badge">🔔<span id="notifBadge" class="badge" style="display: none;">0</span></button>
     </div>
 
+    <!-- المحتوى الرئيسي -->
     <div id="pageContent" class="page-content"></div>
 
+    <!-- طبقة التحميل -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
         <div id="loadingText" class="loading-text">جاري التحميل...</div>
@@ -44,13 +41,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>تفاصيل الدواء</h3>
-                <button id="closeMedModal" class="close-btn">×</button>
+                <button id="closeMedModal" class="close-btn">&times;</button>
             </div>
             <div id="medDetail" class="med-detail"></div>
             <div class="modal-buttons">
-                <button id="addToPharmacyBtn" class="primary-btn">إضافة للصيدلية</button>
-                <button id="editMedBtn" class="secondary-btn">تعديل</button>
-                <button id="deleteMedBtn" class="danger-btn">حذف</button>
+                <button id="addToPharmacyBtn" class="primary-btn">➕ إضافة للصيدلية</button>
+                <button id="editMedBtn" class="secondary-btn">✏️ تعديل</button>
+                <button id="deleteMedBtn" class="danger-btn">🗑️ حذف</button>
                 <button id="cancelMedBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
@@ -61,7 +58,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="medFormTitle">إضافة دواء</h3>
-                <button id="closeMedFormModal" class="close-btn">×</button>
+                <button id="closeMedFormModal" class="close-btn">&times;</button>
             </div>
             <div class="form-group">
                 <label>الاسم التجاري *</label>
@@ -83,11 +80,11 @@
                 <label>التصنيف</label>
                 <input type="text" id="medCategory" list="medCategoriesList" placeholder="اختر أو اكتب تصنيفاً">
                 <datalist id="medCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('medCategory')">إضافة تصنيف جديد</button>
+                <button type="button" class="small-btn" onclick="addNewCategory('medCategory')">➕ إضافة تصنيف جديد</button>
             </div>
             <div class="form-group">
                 <label>الشكل الدوائي</label>
-                <input type="text" id="dosageForm" placeholder="مثال: أقراص">
+                <input type="text" id="dosageForm" placeholder="مثال: أقراص، شراب، مرهم">
             </div>
             <div class="form-group">
                 <label>الجرعة</label>
@@ -129,7 +126,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="generalFormTitle">إضافة دواء عام</h3>
-                <button id="closeGeneralFormModal" class="close-btn">×</button>
+                <button id="closeGeneralFormModal" class="close-btn">&times;</button>
             </div>
             <div class="form-group">
                 <label>الاسم التجاري *</label>
@@ -151,7 +148,7 @@
                 <label>التصنيف</label>
                 <input type="text" id="genCategory" list="genCategoriesList">
                 <datalist id="genCategoriesList"></datalist>
-                <button type="button" class="small-btn" onclick="addNewCategory('genCategory')">إضافة تصنيف جديد</button>
+                <button type="button" class="small-btn" onclick="addNewCategory('genCategory')">➕ إضافة تصنيف جديد</button>
             </div>
             <div class="form-group">
                 <label>الشكل الدوائي</label>
@@ -185,12 +182,12 @@
         <div class="modal-content" style="max-width: 90%;">
             <div class="modal-header">
                 <h3>مسح الباركود</h3>
-                <button id="closeScannerModal" class="close-btn">×</button>
+                <button id="closeScannerModal" class="close-btn">&times;</button>
             </div>
             <video id="scannerVideo" style="width: 100%; border-radius: 12px;"></video>
             <div id="scannerResult" class="scanner-result"></div>
             <div class="modal-buttons">
-                <button id="manualBarcodeBtn" class="secondary-btn">إدخال يدوي</button>
+                <button id="manualBarcodeBtn" class="secondary-btn">📝 إدخال يدوي</button>
                 <button id="cancelScannerBtn" class="cancel-btn">إلغاء</button>
             </div>
         </div>
@@ -201,7 +198,7 @@
         <div class="modal-content" style="max-width: 90%;">
             <div class="modal-header">
                 <h3>الإعدادات</h3>
-                <button id="closeSettingsModal" class="close-btn">×</button>
+                <button id="closeSettingsModal" class="close-btn">&times;</button>
             </div>
             <div id="settingsContent"></div>
         </div>
@@ -219,7 +216,7 @@
         </div>
     </div>
 
-    <!-- مودال حفظ التغييرات -->
+    <!-- مودال حفظ التغييرات عند الرجوع -->
     <div id="saveChangesModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3>هل تريد حفظ التغييرات؟</h3>
@@ -232,10 +229,16 @@
         </div>
     </div>
 
+    <!-- ملف الجافاسكريبت الرئيسي -->
     <script src="app.js"></script>
     <script>
+        // تسجيل Service Worker للعمل دون اتصال
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('Service Worker registered', reg);
+            }).catch(err => {
+                console.error('Service Worker registration failed', err);
+            });
         }
     </script>
 </body>
