@@ -31,7 +31,7 @@ function hideLoading() {
     if (ov) ov.style.display = 'none';
 }
 
-// ========== الترجمات الكاملة ==========
+// ========== الترجمات ==========
 const translations = {
     ar: {
         home_title: 'إدارة صيدليتي', inbox_title: 'صندوق الوارد', explore_title: 'استكشف',
@@ -251,24 +251,54 @@ function showExitConfirmation() { document.getElementById('exitConfirmModal').st
 function hideExitConfirmation() { document.getElementById('exitConfirmModal').style.display = 'none'; }
 function exitApp() { if (confirm('هل تريد إغلاق التطبيق؟')) window.close(); hideExitConfirmation(); }
 
+// ========== إصلاح نافذة حفظ التغييرات ==========
 function showSaveChangesModal(onSave, onDiscard) {
     const modal = document.getElementById('saveChangesModal');
-    if (!modal) return;
+    if (!modal) {
+        console.error('saveChangesModal not found');
+        return;
+    }
     modal.style.display = 'flex';
     const saveBtn = document.getElementById('saveAndExitBtn');
     const discardBtn = document.getElementById('exitWithoutSaveBtn');
     const cancelBtn = document.getElementById('cancelSaveExitBtn');
-    const cleanup = () => {
-        saveBtn.removeEventListener('click', handleSave);
-        discardBtn.removeEventListener('click', handleDiscard);
-        cancelBtn.removeEventListener('click', handleCancel);
+    
+    if (!saveBtn || !discardBtn || !cancelBtn) {
+        console.error('Modal buttons not found');
+        modal.style.display = 'none';
+        return;
+    }
+    
+    // إزالة المستمعات القديمة لتجنب التكرار
+    const newSaveBtn = saveBtn.cloneNode(true);
+    const newDiscardBtn = discardBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    discardBtn.parentNode.replaceChild(newDiscardBtn, discardBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    const handleSave = () => {
+        modal.style.display = 'none';
+        if (typeof onSave === 'function') onSave();
+        cleanup();
     };
-    const handleSave = () => { modal.style.display = 'none'; if (onSave) onSave(); cleanup(); };
-    const handleDiscard = () => { modal.style.display = 'none'; if (onDiscard) onDiscard(); cleanup(); };
-    const handleCancel = () => { modal.style.display = 'none'; cleanup(); };
-    saveBtn.addEventListener('click', handleSave);
-    discardBtn.addEventListener('click', handleDiscard);
-    cancelBtn.addEventListener('click', handleCancel);
+    const handleDiscard = () => {
+        modal.style.display = 'none';
+        if (typeof onDiscard === 'function') onDiscard();
+        cleanup();
+    };
+    const handleCancel = () => {
+        modal.style.display = 'none';
+        cleanup();
+    };
+    const cleanup = () => {
+        newSaveBtn.removeEventListener('click', handleSave);
+        newDiscardBtn.removeEventListener('click', handleDiscard);
+        newCancelBtn.removeEventListener('click', handleCancel);
+    };
+    newSaveBtn.addEventListener('click', handleSave);
+    newDiscardBtn.addEventListener('click', handleDiscard);
+    newCancelBtn.addEventListener('click', handleCancel);
 }
 
 function pushPageToHistory(page) {
@@ -576,7 +606,7 @@ async function getFilteredAndSorted() {
     return list;
 }
 
-// ========== دوال الشركات والتصنيفات (مع التعديل الجماعي والحذف) ==========
+// ========== دوال الشركات والتصنيفات ==========
 function toggleBatchMode() {
     batchMode = !batchMode;
     if(batchMode){
@@ -804,7 +834,7 @@ function renderMedicationsInExplore(list, parentDiv) {
     });
 }
 
-// ========== كاميرا الباركود (تم إصلاحها) ==========
+// ========== كاميرا الباركود ==========
 async function requestCameraPermission() {
     try { const stream = await navigator.mediaDevices.getUserMedia({ video: true }); stream.getTracks().forEach(t=>t.stop()); return true; }
     catch(e){ console.error(e); return false; }
@@ -813,33 +843,32 @@ async function startBarcodeScanner(targetInputId) {
     const modal = document.getElementById('barcodeScannerModal'), video = document.getElementById('scannerVideo'), resultDiv = document.getElementById('scannerResult');
     if(!modal||!video) return;
     const hasPerm = await requestCameraPermission();
-    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا. يرجى السماح بالوصول إلى الكاميرا في إعدادات المتصفح.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا. يرجى السماح بالوصول إلى الكاميرا في إعدادات المتصفح أو استخدم الإدخال اليدوي.'); return; }
+    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا.'); return; }
     modal.setAttribute('data-target', targetInputId);
     modal.style.display='flex';
     resultDiv.innerHTML='جاري تشغيل الكاميرا...';
     if(currentScanner){ try{ currentScanner.stop(); }catch(e){} currentScanner=null; }
     Quagga.init({ inputStream:{ name:"Live", type:"LiveStream", target:video, constraints:{ facingMode:"environment", width:640, height:480 } }, decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","code_39_reader","upc_reader","codabar_reader"] }, locate:true, numOfWorkers:navigator.hardwareConcurrency||2 }, (err) => {
-        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا. يمكنك الإدخال يدويًا.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; modal.style.display='flex'; alert('تعذر الوصول إلى الكاميرا. استخدم الإدخال اليدوي.'); return; }
-        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر حتى يتم مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
+        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; return; }
+        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
     });
     Quagga.onDetected((data) => {
         const code = data.codeResult.code;
         resultDiv.innerHTML = `✅ تم مسح: ${code}`;
         Quagga.stop(); currentScanner=null; modal.style.display='none';
-        const targetInput = document.getElementById(targetInputId);
-        if(targetInput) targetInput.value = code;
+        document.getElementById(targetInputId).value = code;
     });
 }
 async function startScannerForSearch() {
     const modal = document.getElementById('barcodeScannerModal'), video = document.getElementById('scannerVideo'), resultDiv = document.getElementById('scannerResult');
     if(!modal||!video) return;
     const hasPerm = await requestCameraPermission();
-    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا. يرجى السماح بالوصول إلى الكاميرا في إعدادات المتصفح أو استخدم الإدخال اليدوي.'); return; }
+    if(!hasPerm){ resultDiv.innerHTML='❌ لا يمكن الوصول إلى الكاميرا.'; modal.style.display='flex'; alert('لا يمكن الوصول إلى الكاميرا.'); return; }
     modal.style.display='flex'; resultDiv.innerHTML='جاري تشغيل الكاميرا...';
     if(currentScanner){ try{ currentScanner.stop(); }catch(e){} currentScanner=null; }
     Quagga.init({ inputStream:{ name:"Live", type:"LiveStream", target:video, constraints:{ facingMode:"environment", width:640, height:480 } }, decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","code_39_reader","upc_reader","codabar_reader"] }, locate:true, numOfWorkers:navigator.hardwareConcurrency||2 }, (err) => {
-        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا. يمكنك الإدخال يدويًا.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; alert('تعذر الوصول إلى الكاميرا. استخدم الإدخال اليدوي.'); return; }
-        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر حتى يتم مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
+        if(err){ resultDiv.innerHTML='❌ تعذر فتح الكاميرا.'; document.getElementById('manualBarcodeBtn').style.display='inline-block'; alert('تعذر الوصول إلى الكاميرا.'); return; }
+        Quagga.start(); currentScanner=Quagga; resultDiv.innerHTML='انتظر مسح الباركود...'; document.getElementById('manualBarcodeBtn').style.display='inline-block';
     });
     Quagga.onDetected(async (data) => {
         const code = data.codeResult.code;
@@ -1207,22 +1236,38 @@ function setupModalBackdropClose(){ document.querySelectorAll('.modal').forEach(
 
 // ========== زر العودة المتقدم (مع إلغاء البحث والعودة للصفحة السابقة) ==========
 window.handleBackButton = function() {
+    console.log('handleBackButton called, currentPage:', currentPage, 'isInEditMode:', isInEditMode, 'searchQuery:', searchQuery);
     if (currentPage === 'home') {
         showExitConfirmation();
         return;
     }
+    // إذا كان في وضع تعديل دواء
     if (isInEditMode && currentMed) {
         showSaveChangesModal(
-            async () => { await saveMedFromForm(); isInEditMode=false; currentMed=null; switchPage('home'); },
-            () => { isInEditMode=false; currentMed=null; closeMedFormModal(); switchPage('home'); }
+            async () => {
+                console.log('Save and exit');
+                await saveMedFromForm();
+                isInEditMode = false;
+                currentMed = null;
+                switchPage('home');
+            },
+            () => {
+                console.log('Discard and exit');
+                isInEditMode = false;
+                currentMed = null;
+                closeMedFormModal();
+                switchPage('home');
+            }
         );
         return;
     }
+    // إذا كان في صفحة تفاصيل شركة
     if (currentCompany !== null) {
         currentCompany = null;
         renderCompaniesPage();
         return;
     }
+    // إذا كان هناك بحث نشط
     if (searchQuery !== '') {
         searchQuery = '';
         if (currentPage === 'all') renderAllMedicines();
@@ -1231,6 +1276,7 @@ window.handleBackButton = function() {
         else if (currentPage === 'expiring') renderExpiringSoonPage();
         return;
     }
+    // الرجوع في التاريخ
     if (pageHistoryStack.length > 0) {
         const prev = pageHistoryStack.pop();
         switchPage(prev);
@@ -1292,6 +1338,7 @@ if(cancelExitBtn) cancelExitBtn.addEventListener('click', hideExitConfirmation);
 window.addEventListener('popstate', (event) => { event.preventDefault(); window.handleBackButton(); });
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM fully loaded');
     await initDemoData();
     if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
     if(localStorage.getItem('appLang')) currentLang = localStorage.getItem('appLang');
