@@ -1,9 +1,11 @@
 // ========== فحص Dexie ==========
 if (typeof Dexie === 'undefined') {
-    alert('خطأ: مكتبة Dexie لم يتم تحميلها.');
+    alert('خطأ: مكتبة Dexie لم يتم تحميلها. يرجى التحقق من اتصال الإنترنت وإعادة تحميل الصفحة.');
+    console.error('Dexie is not defined');
     throw new Error('Dexie not loaded');
 }
 
+// ========== IndexedDB ==========
 const db = new Dexie('PharmacyDB');
 db.version(1).stores({
     meds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
@@ -24,7 +26,7 @@ const availableColors = [
     { name: 'أحمر', nameEn: 'Red', primary: '#e74c3c', primaryDark: '#b33a2c' }
 ];
 
-// ========== الترجمة ==========
+// ========== الترجمات ==========
 const translations = {
     ar: {
         home_title: 'إدارة صيدليتي', inbox_title: 'صندوق الوارد', explore_title: 'استكشف',
@@ -144,8 +146,6 @@ let isInEditMode = false;
 let selectedCompanies = new Set();
 let selectedCategories = new Set();
 let batchMode = false;
-
-// متغيرات لحالة البحث في الشركات والتصنيفات
 let currentCompaniesSearchTerm = '';
 let currentCompaniesSortType = 'alpha';
 let currentCategoriesSearchTerm = '';
@@ -652,7 +652,6 @@ async function getFilteredAndSorted() {
     else if(sortBy === 'date_desc') list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     return list;
 }
-
 // ========== دوال الشركات والتصنيفات (مع الحفاظ على البحث والفرز أثناء التحديد الجماعي) ==========
 function toggleBatchMode() {
     batchMode = !batchMode;
@@ -692,40 +691,65 @@ function toggleSelectCategory(name) {
     updateBatchRenameCategoriesCount();
 }
 
-// التعديل الجماعي للشركات (يحافظ على البحث والفرز)
+// ========== التعديل الجماعي للشركات (تم إصلاحه) ==========
 async function batchRenameCompanies() {
     if (!selectedCompanies.size) return alert('لم يتم تحديد أي شركة');
     const newName = prompt('أدخل الاسم الجديد للشركات المحددة:');
     if (!newName?.trim()) return;
-    showLoading(`جاري تغيير اسم ${selectedCompanies.size} شركة...`);
+    showLoading(`جاري تغيير اسم ${selectedCompanies.size} شركة إلى "${newName}"...`);
     try {
-        for (let old of selectedCompanies) {
-            await db.meds.where('company').equals(old).modify({ company: newName });
-            await db.deletedMeds.where('company').equals(old).modify({ company: newName });
+        const companiesToRename = Array.from(selectedCompanies);
+        for (let oldName of companiesToRename) {
+            // تحديث الأدوية النشطة
+            const medsToUpdate = await db.meds.where('company').equals(oldName).toArray();
+            for (let med of medsToUpdate) {
+                await db.meds.update(med.id, { company: newName });
+            }
+            // تحديث الأدوية المحذوفة
+            const deletedToUpdate = await db.deletedMeds.where('company').equals(oldName).toArray();
+            for (let med of deletedToUpdate) {
+                await db.deletedMeds.update(med.id, { company: newName });
+            }
         }
         alert(`تم تحديث ${selectedCompanies.size} شركة إلى "${newName}"`);
         selectedCompanies.clear();
         batchMode = false;
-        // إعادة عرض الصفحة مع الحفاظ على البحث والفرز الحاليين
-        await renderCompaniesPage(); // ستقوم الدالة باستعادة currentCompaniesSearchTerm و currentCompaniesSortType
-    } catch (e) { alert('حدث خطأ'); } finally { hideLoading(); }
+        await renderCompaniesPage();
+    } catch (err) {
+        console.error('خطأ في batchRenameCompanies:', err);
+        alert('حدث خطأ أثناء التعديل الجماعي: ' + err.message);
+    } finally {
+        hideLoading();
+    }
 }
 
 async function batchRenameCategories() {
     if (!selectedCategories.size) return alert('لم يتم تحديد أي تصنيف');
     const newName = prompt('أدخل الاسم الجديد للتصنيفات المحددة:');
     if (!newName?.trim()) return;
-    showLoading(`جاري تغيير اسم ${selectedCategories.size} تصنيف...`);
+    showLoading(`جاري تغيير اسم ${selectedCategories.size} تصنيف إلى "${newName}"...`);
     try {
-        for (let old of selectedCategories) {
-            await db.meds.where('category').equals(old).modify({ category: newName });
-            await db.deletedMeds.where('category').equals(old).modify({ category: newName });
+        const categoriesToRename = Array.from(selectedCategories);
+        for (let oldName of categoriesToRename) {
+            const medsToUpdate = await db.meds.where('category').equals(oldName).toArray();
+            for (let med of medsToUpdate) {
+                await db.meds.update(med.id, { category: newName });
+            }
+            const deletedToUpdate = await db.deletedMeds.where('category').equals(oldName).toArray();
+            for (let med of deletedToUpdate) {
+                await db.deletedMeds.update(med.id, { category: newName });
+            }
         }
         alert(`تم تحديث ${selectedCategories.size} تصنيف إلى "${newName}"`);
         selectedCategories.clear();
         batchMode = false;
         await renderCategoriesPage();
-    } catch (e) { alert('حدث خطأ'); } finally { hideLoading(); }
+    } catch (err) {
+        console.error('خطأ في batchRenameCategories:', err);
+        alert('حدث خطأ أثناء التعديل الجماعي: ' + err.message);
+    } finally {
+        hideLoading();
+    }
 }
 
 async function batchDeleteCompanies() {
@@ -762,7 +786,7 @@ async function batchDeleteCategories() {
     } catch (e) { alert('خطأ'); } finally { hideLoading(); }
 }
 
-// عرض الشركات مع الحفاظ على البحث والفرز
+// ========== عرض الشركات مع الحفاظ على البحث والفرز ==========
 async function renderCompaniesPage() {
     if (currentCompany) return showMedicinesByCompany(currentCompany);
     batchMode = false;
@@ -802,7 +826,6 @@ async function renderCompaniesPage() {
     const deleteBtn = document.getElementById('batchDeleteCompaniesBtn');
     const cancelBtn = document.getElementById('batchCancelBtn');
 
-    // استعادة قيمة البحث والفرز المحفوظة
     if (searchInput) searchInput.value = currentCompaniesSearchTerm;
     if (sortSelect) sortSelect.value = currentCompaniesSortType;
 
@@ -867,7 +890,6 @@ async function renderCompaniesPage() {
 }
 
 async function renderCompaniesInBatchMode() {
-    // استخدم نفس منطق displayCompanies مع البحث والفرز الحاليين
     const meds = await db.meds.toArray();
     const map = new Map();
     meds.forEach(m => {
@@ -875,7 +897,6 @@ async function renderCompaniesInBatchMode() {
     });
     let companies = Array.from(map.entries()).map(([n, d]) => ({ name: n, origin: d.origin, count: d.count }));
 
-    // تطبيق البحث والفرز
     if (currentCompaniesSearchTerm.trim()) {
         companies = companies.filter(c => c.name.toLowerCase().includes(currentCompaniesSearchTerm.toLowerCase()));
     }
@@ -1027,7 +1048,7 @@ async function showMedicinesByCompany(companyName) {
     });
 }
 
-// صفحة التصنيفات مع الحفاظ على البحث (اختياري، يمكن إضافة بحث للتصنيفات أيضاً)
+// ========== صفحة التصنيفات ==========
 async function renderCategoriesPage() {
     const meds = await db.meds.toArray();
     const catsMap = new Map();
@@ -1306,7 +1327,7 @@ function renderMedicationsInExplore(list, parentDiv) {
 // ========== دوال النماذج (إضافة وتعديل الأدوية) ==========
 function showAddFormModal() {
     isEditing = false;
-    isInEditMode = true;  // لزر العودة
+    isInEditMode = true;
     document.getElementById('medFormTitle').innerText = t('add_med');
     document.getElementById('submitMedBtn').innerText = t('save_med');
     document.getElementById('medName').value = '';
@@ -1977,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initDemoData();
     if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
     if (localStorage.getItem('appLang')) currentLang = localStorage.getItem('appLang');
-    loadSavedColor(); // تطبيق اللون المحفوظ
+    loadSavedColor();
     document.body.dir = 'rtl';
     updateAllText();
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') Notification.requestPermission();
