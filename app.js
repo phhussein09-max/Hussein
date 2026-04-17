@@ -1,15 +1,22 @@
-// ========== فحص Dexie ==========
 if (typeof Dexie === 'undefined') {
     alert('خطأ: مكتبة Dexie لم يتم تحميلها. يرجى التحقق من اتصال الإنترنت وإعادة تحميل الصفحة.');
     console.error('Dexie is not defined');
     throw new Error('Dexie not loaded');
 }
 
-// ========== IndexedDB ==========
+// ========== IndexedDB مع ترقية الإصدار (لحل مشكلة deletedMeds) ==========
 const db = new Dexie('PharmacyDB');
-db.version(1).stores({
+// إصدار 2 مع إضافة الفهارس المطلوبة
+db.version(2).stores({
     meds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
     deletedMeds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
+    notifications: '++id, message, date, read',
+    notificationLog: '++id, medId, lastNotified, count'
+});
+// احتفاظ بالإصدار 1 للتوافق مع البيانات القديمة (سيتم ترقيتها تلقائياً)
+db.version(1).stores({
+    meds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
+    deletedMeds: '++id, name, expiry, type, category, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
     notifications: '++id, message, date, read',
     notificationLog: '++id, medId, lastNotified, count'
 });
@@ -116,7 +123,6 @@ const translations = {
     }
 };
 
-// ========== المتغيرات العامة ==========
 let currentLang = localStorage.getItem('appLang') || 'ar';
 let currentPage = 'home';
 let searchQuery = '';
@@ -150,7 +156,6 @@ let batchMode = false;
 let currentCompaniesSearchTerm = '';
 let currentCompaniesSortType = 'alpha';
 
-// ========== دوال مساعدة ==========
 function t(key, ...args) {
     let text = translations[currentLang][key] || key;
     if (args.length) {
@@ -185,7 +190,6 @@ function getDaysRemaining(expiryDateStr) {
     return Math.ceil((expiry - today) / (1000*60*60*24));
 }
 
-// ========== إدارة الألوان ==========
 function applyAppColor(color) {
     const root = document.documentElement;
     root.style.setProperty('--primary', color.primary);
@@ -225,7 +229,6 @@ function showColorModal() {
     openModal('colorModal');
 }
 
-// ========== دوال التحميل والبيانات ==========
 async function migrateData() {
     const meds = await db.meds.toArray();
     for (let med of meds) {
@@ -276,7 +279,6 @@ async function addMedicineToGeneralIfNotExists(medData) {
     }
 }
 
-// ========== دوال التنقل والخروج ==========
 function goHome() {
     if (currentPage === 'home') showExitConfirmation();
     else switchPage('home');
@@ -343,10 +345,10 @@ function updateAllText() {
     const notifBtn = document.getElementById('notifBtn');
     if (currentPage === 'home') {
         if (backBtn) backBtn.style.display = 'none';
-        if (settingsBtn) settingsBtn.style.display = 'block';
-        if (notifBtn) notifBtn.style.display = 'block';
+        if (settingsBtn) settingsBtn.style.display = 'flex';
+        if (notifBtn) notifBtn.style.display = 'flex';
     } else {
-        if (backBtn) backBtn.style.display = 'block';
+        if (backBtn) backBtn.style.display = 'flex';
         if (settingsBtn) settingsBtn.style.display = 'none';
         if (notifBtn) notifBtn.style.display = 'none';
     }
@@ -361,7 +363,6 @@ function updateAllText() {
     else if (currentPage === 'deleted') renderDeletedItems();
 }
 
-// ========== دوال البحث ==========
 function saveSearchQuery(pageKey, query) {
     if (!query.trim()) return;
     let arr = recentSearches[pageKey];
@@ -423,6 +424,7 @@ function enhanceSearchInput(input, pageKey) {
         searchBtn.addEventListener('click', () => { const q = input.value.trim(); if (q) performSearch(q, pageKey); suggestionsDiv.classList.remove('show'); });
     }
 }
+
 // ========== دوال عرض الأدوية والترحيل ==========
 function renderMedications(list, showDeleteButton = true) {
     const container = document.getElementById('contentList');
@@ -2067,4 +2069,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchPage('home');
     checkAndSendExpiryNotifications();
 });
-
