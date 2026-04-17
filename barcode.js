@@ -1,6 +1,4 @@
-// ========== ملف الباركود المنفصل ==========
-// هذا الملف يحتوي على دوال الكاميرا ومسح الباركود فقط
-
+// ========== ملف الباركود المنفصل (تم إصلاح الكاميرا) ==========
 let currentScanner = null;
 
 async function requestCameraPermission() {
@@ -18,7 +16,10 @@ async function startBarcodeScanner(targetInputId) {
     const modal = document.getElementById('barcodeScannerModal');
     const video = document.getElementById('scannerVideo');
     const resultDiv = document.getElementById('scannerResult');
-    if (!modal || !video) return;
+    if (!modal || !video) {
+        console.error('Modal or video element not found');
+        return;
+    }
     
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
@@ -37,18 +38,28 @@ async function startBarcodeScanner(targetInputId) {
         currentScanner = null;
     }
     
+    // إعادة تعيين الفيديو
+    video.srcObject = null;
+    
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: video,
-            constraints: { facingMode: "environment", width: 640, height: 480 }
+            constraints: {
+                facingMode: "environment",
+                width: { min: 640, ideal: 1280 },
+                height: { min: 480, ideal: 720 }
+            }
         },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "upc_reader", "codabar_reader"] },
+        decoder: {
+            readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "upc_reader", "codabar_reader"]
+        },
         locate: true,
         numOfWorkers: navigator.hardwareConcurrency || 2
     }, (err) => {
         if (err) {
+            console.error('Quagga init error:', err);
             resultDiv.innerHTML = '❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.';
             const manualBtn = document.getElementById('manualBarcodeBtn');
             if (manualBtn) manualBtn.style.display = 'inline-block';
@@ -94,18 +105,27 @@ async function startScannerForSearch() {
         currentScanner = null;
     }
     
+    video.srcObject = null;
+    
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: video,
-            constraints: { facingMode: "environment", width: 640, height: 480 }
+            constraints: {
+                facingMode: "environment",
+                width: { min: 640, ideal: 1280 },
+                height: { min: 480, ideal: 720 }
+            }
         },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "upc_reader", "codabar_reader"] },
+        decoder: {
+            readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "upc_reader", "codabar_reader"]
+        },
         locate: true,
         numOfWorkers: navigator.hardwareConcurrency || 2
     }, (err) => {
         if (err) {
+            console.error('Quagga init error:', err);
             resultDiv.innerHTML = '❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.';
             const manualBtn = document.getElementById('manualBarcodeBtn');
             if (manualBtn) manualBtn.style.display = 'inline-block';
@@ -128,7 +148,9 @@ async function startScannerForSearch() {
         if (typeof window.findMedicineByBarcode === 'function') {
             window.findMedicineByBarcode(code);
         } else {
-            alert('لم يتم العثور على دواء بهذا الباركود');
+            const med = await db.meds.where('barcode').equals(code).first();
+            if (med) showMedDetails(med);
+            else alert('لم يتم العثور على دواء بهذا الباركود');
         }
     });
 }
@@ -176,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// تصدير الدوال للنطاق العام
 window.startBarcodeScanner = startBarcodeScanner;
 window.startScannerForSearch = startScannerForSearch;
 window.stopScannerAndClose = stopScannerAndClose;
