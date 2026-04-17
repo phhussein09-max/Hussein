@@ -1,4 +1,3 @@
-// ========== ملف الباركود المنفصل (يعمل على جميع الأجهزة) ==========
 let currentScanner = null;
 let scannerActive = false;
 
@@ -15,9 +14,7 @@ async function requestCameraPermission() {
 
 function stopScannerAndClose() {
     if (currentScanner) {
-        try {
-            currentScanner.stop();
-        } catch(e) {}
+        try { currentScanner.stop(); } catch(e) {}
         currentScanner = null;
     }
     scannerActive = false;
@@ -34,10 +31,7 @@ async function startBarcodeScanner(targetInputId) {
     const modal = document.getElementById('barcodeScannerModal');
     const video = document.getElementById('scannerVideo');
     const resultDiv = document.getElementById('scannerResult');
-    if (!modal || !video) {
-        console.error('Modal or video element not found');
-        return;
-    }
+    if (!modal || !video) return;
     
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
@@ -47,14 +41,11 @@ async function startBarcodeScanner(targetInputId) {
         return;
     }
     
-    // إيقاف أي ماسح سابق
     stopScannerAndClose();
-    
     modal.setAttribute('data-target', targetInputId);
     modal.style.display = 'flex';
     resultDiv.innerHTML = 'جاري تشغيل الكاميرا...';
     
-    // تأكد من أن عنصر الفيديو جاهز
     if (video.srcObject) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
@@ -85,7 +76,6 @@ async function startBarcodeScanner(targetInputId) {
         numOfWorkers: navigator.hardwareConcurrency || 2
     }, (err) => {
         if (err) {
-            console.error('Quagga init error:', err);
             resultDiv.innerHTML = '❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.';
             const manualBtn = document.getElementById('manualBarcodeBtn');
             if (manualBtn) manualBtn.style.display = 'inline-block';
@@ -109,7 +99,6 @@ async function startBarcodeScanner(targetInputId) {
         modal.style.display = 'none';
         const targetInput = document.getElementById(targetInputId);
         if (targetInput) targetInput.value = code;
-        // إيقاف تتبع الفيديو
         if (video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
             video.srcObject = null;
@@ -132,7 +121,6 @@ async function startScannerForSearch() {
     }
     
     stopScannerAndClose();
-    
     modal.style.display = 'flex';
     resultDiv.innerHTML = 'جاري تشغيل الكاميرا...';
     
@@ -202,26 +190,19 @@ async function startScannerForSearch() {
     });
 }
 
-// ربط الأزرار بعد تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     const scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
     if (scanBarcodeBtn) scanBarcodeBtn.onclick = () => startBarcodeScanner('medBarcode');
-    
     const scanBarcodeGenBtn = document.getElementById('scanBarcodeGenBtn');
     if (scanBarcodeGenBtn) scanBarcodeGenBtn.onclick = () => startBarcodeScanner('genBarcode');
-    
     const homeBarcodeBtn = document.getElementById('homeBarcodeBtn');
     if (homeBarcodeBtn) homeBarcodeBtn.onclick = () => startScannerForSearch();
-    
     const barcodeSearchBtn = document.getElementById('barcodeSearchBtn');
     if (barcodeSearchBtn) barcodeSearchBtn.onclick = () => startScannerForSearch();
-    
     const closeScannerModal = document.getElementById('closeScannerModal');
     if (closeScannerModal) closeScannerModal.onclick = stopScannerAndClose;
-    
     const cancelScannerBtn = document.getElementById('cancelScannerBtn');
     if (cancelScannerBtn) cancelScannerBtn.onclick = stopScannerAndClose;
-    
     const manualBarcodeBtn = document.getElementById('manualBarcodeBtn');
     if (manualBarcodeBtn) {
         manualBarcodeBtn.addEventListener('click', () => {
