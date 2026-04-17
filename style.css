@@ -1,7 +1,8 @@
-/* ========== المتغيرات العامة والألوان ========== */
+/* ========== المتغيرات ========== */
 :root {
     --primary: #2c7da0;
     --primary-dark: #1f5068;
+    --primary-light: #4a9ec4;
     --danger: #e76f51;
     --warning: #f4a261;
     --success: #2a9d8f;
@@ -10,11 +11,13 @@
     --text: #2d3e50;
     --border: #e9ecef;
     --input-bg: #ffffff;
-    --outline-color: #2c7da0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.05);
+    --radius: 16px;
 }
 body.dark {
     --primary: #3b8db0;
     --primary-dark: #2c6d8a;
+    --primary-light: #5aa9cc;
     --danger: #e76f51;
     --warning: #f4a261;
     --success: #2a9d8f;
@@ -23,7 +26,6 @@ body.dark {
     --text: #e0e0e0;
     --border: #333;
     --input-bg: #2d2d2d;
-    --outline-color: #3b8db0;
 }
 * {
     margin: 0;
@@ -37,9 +39,11 @@ body {
     transition: background 0.3s, color 0.3s;
     height: 100vh;
     overflow: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
-
-/* ========== الهيدر (أزرار: إعدادات - اليسار، العنوان وسط، إشعارات - اليمين) ========== */
+/* الهيدر - ترتيب ثابت */
 .app-header {
     background: var(--primary);
     color: white;
@@ -51,12 +55,14 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     z-index: 10;
     width: 100%;
+    position: relative;
 }
 .app-title {
     font-size: 1.2rem;
     font-weight: bold;
     text-align: center;
     flex: 1;
+    white-space: nowrap;
 }
 .header-btn {
     background: none;
@@ -76,13 +82,6 @@ body {
 .header-btn:hover {
     background: rgba(255,255,255,0.2);
 }
-.settings-btn {
-    order: 1;
-}
-.notif-btn {
-    order: 3;
-    position: relative;
-}
 .badge {
     position: absolute;
     top: 0;
@@ -97,8 +96,7 @@ body {
     align-items: center;
     justify-content: center;
 }
-
-/* ========== زر العودة (ثابت في أسفل اليمين) ========== */
+/* زر العودة */
 .back-btn {
     position: fixed;
     bottom: 20px;
@@ -126,8 +124,7 @@ body {
     transform: scale(1.05);
     background: var(--primary-dark);
 }
-
-/* ========== المحتوى الرئيسي (أبعاد ثابتة بدون مسافات جانبية) ========== */
+/* المحتوى الرئيسي - أبعاد ثابتة */
 #pageContent {
     flex: 1;
     overflow-y: auto;
@@ -137,9 +134,9 @@ body {
     max-width: 100%;
     margin: 0;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
-
-/* ========== البحث ========== */
+/* البحث */
 .search-container {
     position: relative;
     width: 100%;
@@ -152,7 +149,7 @@ body {
     background: var(--card-bg);
     border-radius: 60px;
     padding: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow);
 }
 .search-wrapper input {
     flex: 1;
@@ -195,7 +192,7 @@ body {
     max-height: 250px;
     overflow-y: auto;
     z-index: 100;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow);
     display: none;
 }
 .suggestions-list.show {
@@ -210,11 +207,7 @@ body {
 .suggestion-item:hover {
     background: var(--bg);
 }
-body.dark .suggestion-item:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-/* ========== شريط الفلاتر (أفقي) ========== */
+/* شريط الفلاتر */
 .filters-bar {
     display: flex;
     flex-wrap: wrap;
@@ -235,12 +228,13 @@ body.dark .suggestion-item:hover {
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    transition: 0.2s;
 }
-.filters-bar button:active {
-    transform: scale(0.96);
+.filters-bar select:hover, .filters-bar button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
 }
-
-/* ========== قائمة الأدوية (بطاقات) ========== */
+/* بطاقات الأدوية */
 .content-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -248,13 +242,13 @@ body.dark .suggestion-item:hover {
 }
 .med-card {
     background: var(--card-bg);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 12px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow);
     cursor: pointer;
     border: 1px solid var(--border);
     transition: 0.2s;
@@ -262,6 +256,7 @@ body.dark .suggestion-item:hover {
 .med-card.selected {
     background: var(--primary);
     color: white;
+    border-color: var(--primary-light);
 }
 .med-info {
     display: flex;
@@ -354,11 +349,10 @@ body.dark .suggestion-item:hover {
     background: rgba(255,255,255,0.5);
     border-radius: 1px;
 }
-
-/* ========== الإحصائيات والأزرار الرئيسية ========== */
+/* إحصائيات */
 .stats-box {
     background: var(--card-bg);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 14px;
     margin: 16px 0;
     display: flex;
@@ -397,8 +391,7 @@ body.dark .suggestion-item:hover {
     background: var(--primary-dark);
     transform: scale(1.02);
 }
-
-/* ========== النوافذ المنبثقة (Modals) ========== */
+/* النوافذ المنبثقة */
 .modal {
     display: none;
     position: fixed;
@@ -457,6 +450,10 @@ body.dark .suggestion-item:hover {
     border-radius: 30px;
     cursor: pointer;
     font-size: 12px;
+    transition: 0.2s;
+}
+.small-btn:hover {
+    background: var(--primary-dark);
 }
 .image-upload {
     flex-direction: column;
@@ -500,6 +497,10 @@ body.dark .suggestion-item:hover {
     padding: 8px 16px;
     border-radius: 30px;
     cursor: pointer;
+    transition: 0.2s;
+}
+.save-btn:hover {
+    background: var(--primary-dark);
 }
 .cancel-btn {
     background: var(--danger);
@@ -508,6 +509,10 @@ body.dark .suggestion-item:hover {
     padding: 8px 16px;
     border-radius: 30px;
     cursor: pointer;
+    transition: 0.2s;
+}
+.cancel-btn:hover {
+    background: #d45a3a;
 }
 .empty-state {
     text-align: center;
@@ -515,8 +520,6 @@ body.dark .suggestion-item:hover {
     color: var(--text);
     opacity: 0.7;
 }
-
-/* ========== الترحيل (Pagination) ========== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -531,13 +534,13 @@ body.dark .suggestion-item:hover {
     padding: 6px 12px;
     border-radius: 30px;
     cursor: pointer;
+    transition: 0.2s;
 }
 .pagination button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
-
-/* ========== الشركات والتصنيفات (شبكة وبطاقات) ========== */
+/* الشركات والتصنيفات */
 .companies-grid, .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -546,7 +549,7 @@ body.dark .suggestion-item:hover {
 }
 .company-card, .category-card {
     background: var(--card-bg);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 20px 12px;
     text-align: center;
     cursor: pointer;
@@ -559,7 +562,7 @@ body.dark .suggestion-item:hover {
     justify-content: center;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow);
 }
 .company-card:hover, .category-card:hover {
     transform: translateY(-3px);
@@ -620,8 +623,7 @@ body.dark .medicine-count {
 .category-card.selected .delete-entity-btn {
     display: block;
 }
-
-/* ========== شريط الإجراءات الجماعية ========== */
+/* شريط الإجراءات الجماعية */
 .batch-actions-bar {
     display: flex;
     justify-content: center;
@@ -640,6 +642,10 @@ body.dark .medicine-count {
     border-radius: 40px;
     cursor: pointer;
     font-weight: bold;
+    transition: 0.2s;
+}
+.batch-rename-btn:hover, .batch-delete-entity-btn:hover {
+    background: #21867a;
 }
 .batch-cancel-btn {
     background: var(--danger);
@@ -649,12 +655,15 @@ body.dark .medicine-count {
     border-radius: 40px;
     cursor: pointer;
     font-weight: bold;
+    transition: 0.2s;
 }
-
-/* ========== الإشعارات ========== */
+.batch-cancel-btn:hover {
+    background: #d45a3a;
+}
+/* الإشعارات */
 .notification-item {
     background: var(--card-bg);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 12px;
     margin-bottom: 10px;
     display: flex;
@@ -666,8 +675,7 @@ body.dark .medicine-count {
     font-size: 0.7rem;
     opacity: 0.6;
 }
-
-/* ========== تبويبات الاستكشاف ========== */
+/* تبويبات الاستكشاف */
 .explore-tabs {
     display: flex;
     gap: 8px;
@@ -695,8 +703,7 @@ body.dark .medicine-count {
 .tab-content.active {
     display: block;
 }
-
-/* ========== الإعدادات (بطاقات) ========== */
+/* الإعدادات */
 .settings-cards {
     display: flex;
     flex-direction: column;
@@ -705,7 +712,7 @@ body.dark .medicine-count {
 .settings-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: var(--radius);
     padding: 16px;
     display: flex;
     align-items: center;
@@ -747,8 +754,7 @@ body.dark .medicine-count {
     font-size: 24px;
     cursor: pointer;
 }
-
-/* ========== خيارات اللغة والألوان ========== */
+/* خيارات اللغة والألوان */
 .language-options, .color-options {
     display: flex;
     flex-direction: column;
@@ -764,6 +770,10 @@ body.dark .medicine-count {
     font-size: 16px;
     cursor: pointer;
     text-align: center;
+    transition: 0.2s;
+}
+.lang-option:hover, .color-option:hover {
+    background: var(--primary-dark);
 }
 .color-option {
     display: flex;
@@ -776,8 +786,7 @@ body.dark .medicine-count {
     height: 30px;
     border-radius: 50%;
 }
-
-/* ========== سجل البحث ========== */
+/* سجل البحث */
 .history-category {
     margin-bottom: 20px;
 }
@@ -808,8 +817,7 @@ body.dark .medicine-count {
     color: var(--danger);
     font-weight: bold;
 }
-
-/* ========== تفاصيل الدواء ========== */
+/* تفاصيل الدواء */
 .med-detail-item {
     background: var(--bg);
     padding: 8px 12px;
@@ -830,8 +838,7 @@ body.dark .medicine-count {
     max-width: 100%;
     border-radius: 12px;
 }
-
-/* ========== استيراد وتصدير ========== */
+/* استيراد وتصدير */
 .import-export-grid {
     display: flex;
     flex-direction: column;
@@ -848,8 +855,7 @@ body.dark .medicine-count {
     display: flex;
     gap: 8px;
 }
-
-/* ========== نافذة التحميل ========== */
+/* نافذة التحميل */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -880,8 +886,7 @@ body.dark .medicine-count {
     margin-top: 12px;
     font-size: 14px;
 }
-
-/* ========== توافق الجوال ========== */
+/* توافق الجوال */
 @media (max-width: 600px) {
     .content-list {
         grid-template-columns: 1fr;
@@ -909,34 +914,5 @@ body.dark .medicine-count {
     }
     .form-row button {
         width: 100%;
-    }
-}
-
-/* ========== تحسينات إضافية ========== */
-.chart-container {
-    background: var(--card-bg);
-    padding: 12px;
-    border-radius: 16px;
-    margin: 16px 0;
-}
-.offline-toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--success);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 40px;
-    z-index: 2000;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    white-space: nowrap;
-}
-@media (max-width: 600px) {
-    .offline-toast {
-        white-space: normal;
-        text-align: center;
-        width: 90%;
     }
 }
