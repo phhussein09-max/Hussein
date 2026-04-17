@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>مدير الصيدلية - Pharmacy Manager</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2a9d8f">
+    <meta name="theme-color" content="#2a9d8f" id="themeColorMeta">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
@@ -13,18 +13,16 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="barcode.js"></script>
 </head>
 <body>
     <div class="app-header">
-        <div id="appTitle" class="app-title">مدير الصيدلية</div>
-        <div style="display: flex; gap: 12px;">
-            <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
-            <button id="settingsHeaderBtn" class="header-btn">⚙️</button>
-        </div>
+        <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
+        <div id="appTitle" class="app-title">Pharmacy Manager</div>
+        <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
     </div>
     <div id="pageContent" class="page-content"></div>
 
@@ -34,10 +32,10 @@
             <span class="close-modal" id="closeMedModal">✖</span>
             <h3>📋 تفاصيل الدواء</h3>
             <div id="medDetail"></div>
-            <div class="form-actions" style="margin-top: 20px;">
+            <div class="form-actions">
                 <button id="editMedBtn" class="edit-btn">✏️ تعديل</button>
                 <button id="addToPharmacyBtn" class="save-btn">➕ إضافة إلى الصيدلية</button>
-                <button id="deleteMedBtn" class="delete-btn" onclick="window.deleteCurrentMed()">🗑️ حذف</button>
+                <button id="deleteMedBtn" class="delete-btn">🗑️ حذف</button>
                 <button id="cancelMedBtn" class="cancel-btn">إغلاق</button>
             </div>
         </div>
@@ -55,7 +53,7 @@
                 <div class="form-row">
                     <input type="text" id="medCategory" list="medCategoriesList" placeholder="التصنيف" class="form-input">
                     <datalist id="medCategoriesList"></datalist>
-                    <button type="button" class="small-btn" onclick="window.addNewCategory('medCategory')">➕ تصنيف جديد</button>
+                    <button type="button" class="small-btn" id="addCategoryBtn">➕ تصنيف جديد</button>
                 </div>
                 <div class="form-row"><input type="text" id="dosageForm" placeholder="الشكل الدوائي" class="form-input"><input type="text" id="dosage" placeholder="الجرعة" class="form-input"></div>
                 <div class="form-row">
@@ -82,7 +80,7 @@
                 <div class="form-row">
                     <input type="text" id="genCategory" list="genCategoriesList" placeholder="التصنيف" class="form-input">
                     <datalist id="genCategoriesList"></datalist>
-                    <button type="button" class="small-btn" onclick="window.addNewCategory('genCategory')">➕ تصنيف جديد</button>
+                    <button type="button" class="small-btn" id="addGenCategoryBtn">➕ تصنيف جديد</button>
                 </div>
                 <div class="form-row"><input type="text" id="genDosageForm" placeholder="الشكل الدوائي" class="form-input"><input type="text" id="genDosage" placeholder="الجرعة" class="form-input"></div>
                 <div class="form-row"><input type="text" id="genBarcode" placeholder="الباركود" class="form-input"><button type="button" class="small-btn" id="scanBarcodeGenBtn">📷 مسح باركود</button></div>
@@ -111,13 +109,14 @@
         <div class="modal-content">
             <span class="close-modal" id="closeSettingsModal">✖</span>
             <h3>⚙️ الإعدادات</h3>
-            <div id="settingsContent"></div>
+            <div id="settingsContent" class="settings-cards"></div>
         </div>
     </div>
 
     <!-- نافذة تأكيد الخروج -->
-    <div id="exitConfirmModal" class="modal">
-        <div class="modal-content" style="max-width: 350px;">
+    <div id="exitConfirmModal" class="modal small-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeExitModal">✖</span>
             <h3>تأكيد الخروج</h3>
             <p style="margin: 20px 0;">هل تريد الخروج من التطبيق؟</p>
             <div style="display: flex; gap: 12px; justify-content: center;">
@@ -128,8 +127,9 @@
     </div>
 
     <!-- نافذة حفظ التغييرات -->
-    <div id="saveChangesModal" class="modal">
-        <div class="modal-content" style="max-width: 350px;">
+    <div id="saveChangesModal" class="modal small-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeSaveChangesModal">✖</span>
             <h3>تأكيد</h3>
             <p style="margin: 20px 0;">هل تريد حفظ التغييرات قبل الخروج؟</p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
@@ -140,6 +140,30 @@
         </div>
     </div>
 
+    <!-- نافذة اختيار اللغة -->
+    <div id="languageModal" class="modal small-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeLanguageModal">✖</span>
+            <h3>🌐 اختر اللغة / Select Language</h3>
+            <div class="language-options">
+                <button class="lang-option" data-lang="ar">العربية</button>
+                <button class="lang-option" data-lang="en">English</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة اختيار لون التطبيق -->
+    <div id="colorModal" class="modal small-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeColorModal">✖</span>
+            <h3>🎨 اختر لون التطبيق</h3>
+            <div class="color-options" id="colorOptions"></div>
+        </div>
+    </div>
+
+    <!-- زر العودة -->
+    <button id="backBtn" class="back-btn" style="display: none;">← العودة</button>
+
     <!-- نافذة التحميل -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
@@ -149,7 +173,7 @@
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(reg => console.log('Service Worker registered:', reg))
                 .catch(err => console.log('Service Worker registration failed:', err));
         }
