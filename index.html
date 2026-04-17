@@ -11,7 +11,6 @@
     <meta name="apple-mobile-web-app-title" content="Pharmacy Manager">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="style.css">
-    <!-- المكتبات الخارجية -->
     <script src="https://unpkg.com/dexie@3.2.3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -21,9 +20,14 @@
 </head>
 <body>
     <div class="app-header">
-        <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
+        <div class="header-left">
+            <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
+            <button id="backBtn" class="header-btn back-header-btn" style="display: none;">←</button>
+        </div>
         <div id="appTitle" class="app-title">Pharmacy Manager</div>
-        <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
+        <div class="header-right">
+            <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
+        </div>
     </div>
     <div id="pageContent" class="page-content"></div>
 
@@ -161,9 +165,6 @@
             <div class="color-options" id="colorOptions"></div>
         </div>
     </div>
-
-    <!-- زر العودة (يظهر فقط في الصفحات غير الرئيسية) -->
-    <button id="backBtn" class="back-btn" style="display: none;">← العودة</button>
 
     <!-- نافذة التحميل -->
     <div id="loadingOverlay" class="loading-overlay">
