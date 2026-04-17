@@ -1,5 +1,6 @@
-// ========== ملف الباركود المنفصل (تم إصلاح الكاميرا) ==========
+// ========== ملف الباركود المنفصل (يعمل على جميع الأجهزة) ==========
 let currentScanner = null;
+let scannerActive = false;
 
 async function requestCameraPermission() {
     try {
@@ -9,6 +10,23 @@ async function requestCameraPermission() {
     } catch (err) {
         console.error('Camera permission error:', err);
         return false;
+    }
+}
+
+function stopScannerAndClose() {
+    if (currentScanner) {
+        try {
+            currentScanner.stop();
+        } catch(e) {}
+        currentScanner = null;
+    }
+    scannerActive = false;
+    const modal = document.getElementById('barcodeScannerModal');
+    if (modal) modal.style.display = 'none';
+    const video = document.getElementById('scannerVideo');
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
     }
 }
 
@@ -29,19 +47,27 @@ async function startBarcodeScanner(targetInputId) {
         return;
     }
     
+    // إيقاف أي ماسح سابق
+    stopScannerAndClose();
+    
     modal.setAttribute('data-target', targetInputId);
     modal.style.display = 'flex';
     resultDiv.innerHTML = 'جاري تشغيل الكاميرا...';
     
-    if (currentScanner) {
-        try { currentScanner.stop(); } catch(e) {}
-        currentScanner = null;
+    // تأكد من أن عنصر الفيديو جاهز
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
     }
     
-    // إعادة تعيين الفيديو
-    video.srcObject = null;
+    const QuaggaLib = window.Quagga;
+    if (!QuaggaLib) {
+        resultDiv.innerHTML = '❌ مكتبة الباركود غير متوفرة.';
+        alert('مكتبة الباركود غير متوفرة. تأكد من تحميل Quagga.');
+        return;
+    }
     
-    Quagga.init({
+    QuaggaLib.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
@@ -65,21 +91,29 @@ async function startBarcodeScanner(targetInputId) {
             if (manualBtn) manualBtn.style.display = 'inline-block';
             return;
         }
-        Quagga.start();
-        currentScanner = Quagga;
+        QuaggaLib.start();
+        currentScanner = QuaggaLib;
+        scannerActive = true;
         resultDiv.innerHTML = 'انتظر مسح الباركود...';
         const manualBtn = document.getElementById('manualBarcodeBtn');
         if (manualBtn) manualBtn.style.display = 'inline-block';
     });
     
-    Quagga.onDetected((data) => {
+    QuaggaLib.onDetected((data) => {
+        if (!scannerActive) return;
         const code = data.codeResult.code;
         resultDiv.innerHTML = `✅ تم مسح: ${code}`;
-        Quagga.stop();
+        QuaggaLib.stop();
+        scannerActive = false;
         currentScanner = null;
         modal.style.display = 'none';
         const targetInput = document.getElementById(targetInputId);
         if (targetInput) targetInput.value = code;
+        // إيقاف تتبع الفيديو
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
     });
 }
 
@@ -97,17 +131,24 @@ async function startScannerForSearch() {
         return;
     }
     
+    stopScannerAndClose();
+    
     modal.style.display = 'flex';
     resultDiv.innerHTML = 'جاري تشغيل الكاميرا...';
     
-    if (currentScanner) {
-        try { currentScanner.stop(); } catch(e) {}
-        currentScanner = null;
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
     }
     
-    video.srcObject = null;
+    const QuaggaLib = window.Quagga;
+    if (!QuaggaLib) {
+        resultDiv.innerHTML = '❌ مكتبة الباركود غير متوفرة.';
+        alert('مكتبة الباركود غير متوفرة.');
+        return;
+    }
     
-    Quagga.init({
+    QuaggaLib.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
@@ -125,43 +166,40 @@ async function startScannerForSearch() {
         numOfWorkers: navigator.hardwareConcurrency || 2
     }, (err) => {
         if (err) {
-            console.error('Quagga init error:', err);
             resultDiv.innerHTML = '❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.';
             const manualBtn = document.getElementById('manualBarcodeBtn');
             if (manualBtn) manualBtn.style.display = 'inline-block';
             alert('تعذر الوصول إلى الكاميرا.');
             return;
         }
-        Quagga.start();
-        currentScanner = Quagga;
+        QuaggaLib.start();
+        currentScanner = QuaggaLib;
+        scannerActive = true;
         resultDiv.innerHTML = 'انتظر مسح الباركود...';
         const manualBtn = document.getElementById('manualBarcodeBtn');
         if (manualBtn) manualBtn.style.display = 'inline-block';
     });
     
-    Quagga.onDetected(async (data) => {
+    QuaggaLib.onDetected(async (data) => {
+        if (!scannerActive) return;
         const code = data.codeResult.code;
         resultDiv.innerHTML = `✅ تم مسح: ${code}`;
-        Quagga.stop();
+        QuaggaLib.stop();
+        scannerActive = false;
         currentScanner = null;
         modal.style.display = 'none';
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
         if (typeof window.findMedicineByBarcode === 'function') {
             window.findMedicineByBarcode(code);
         } else {
             const med = await db.meds.where('barcode').equals(code).first();
-            if (med) showMedDetails(med);
+            if (med) window.showMedDetails(med);
             else alert('لم يتم العثور على دواء بهذا الباركود');
         }
     });
-}
-
-function stopScannerAndClose() {
-    if (currentScanner) {
-        try { currentScanner.stop(); } catch(e) {}
-        currentScanner = null;
-    }
-    const modal = document.getElementById('barcodeScannerModal');
-    if (modal) modal.style.display = 'none';
 }
 
 // ربط الأزرار بعد تحميل الصفحة
