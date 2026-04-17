@@ -18,12 +18,12 @@ const MED_TYPES = { GENERAL: 'general', PHARMACY: 'pharmacy' };
 
 // ========== الألوان المتاحة ==========
 const availableColors = [
-    { name: 'أزرق', nameEn: 'Blue', primary: '#2c7da0', primaryDark: '#1f5068' },
-    { name: 'أخضر', nameEn: 'Green', primary: '#2a9d8f', primaryDark: '#1f6e63' },
-    { name: 'بنفسجي', nameEn: 'Purple', primary: '#6c5ce7', primaryDark: '#4a3bb5' },
-    { name: 'وردي', nameEn: 'Pink', primary: '#e84393', primaryDark: '#b12a6b' },
-    { name: 'برتقالي', nameEn: 'Orange', primary: '#e67e22', primaryDark: '#b45d15' },
-    { name: 'أحمر', nameEn: 'Red', primary: '#e74c3c', primaryDark: '#b33a2c' }
+    { name: 'أزرق', nameEn: 'Blue', primary: '#2c7da0', primaryDark: '#1f5068', primaryLight: '#4a9ec4' },
+    { name: 'أخضر', nameEn: 'Green', primary: '#2a9d8f', primaryDark: '#1f6e63', primaryLight: '#4cb8aa' },
+    { name: 'بنفسجي', nameEn: 'Purple', primary: '#6c5ce7', primaryDark: '#4a3bb5', primaryLight: '#8a7ced' },
+    { name: 'وردي', nameEn: 'Pink', primary: '#e84393', primaryDark: '#b12a6b', primaryLight: '#ed6aae' },
+    { name: 'برتقالي', nameEn: 'Orange', primary: '#e67e22', primaryDark: '#b45d15', primaryLight: '#ea9a4e' },
+    { name: 'أحمر', nameEn: 'Red', primary: '#e74c3c', primaryDark: '#b33a2c', primaryLight: '#ec7063' }
 ];
 
 // ========== الترجمات ==========
@@ -33,7 +33,7 @@ const translations = {
         settings_title: 'الإعدادات', about_app: 'حول التطبيق', language: 'اللغة',
         dark_mode: 'الوضع المظلم', backup_restore: 'النسخ الاحتياطي والاستعادة',
         export_db: 'تصدير JSON', import_db: 'استيراد JSON', export_csv: 'تصدير CSV',
-        export_pdf: 'تصدير PDF', about_text: 'Pharmacy Manager Pro\nنسخة متطورة.',
+        export_pdf: 'تصدير PDF', about_text: 'Pharmacy Manager Pro\nنسخة متطورة مع دعم قاعدة بيانات متقدمة، تصدير، إشعارات، وحذف مجمع.',
         save: 'حفظ', cancel: 'إلغاء', name: 'الاسم', search_placeholder: 'بحث...',
         filter_company: 'اسم الشركة', sort_by: 'ترتيب حسب', closest_expiry: 'الأقرب انتهاء أولاً',
         farthest_expiry: 'الأبعد انتهاء أولاً', name_asc: 'اسم (أ-ي)', name_desc: 'اسم (ي-أ)',
@@ -55,14 +55,14 @@ const translations = {
         barcode_label: 'الباركود (اختياري)', back_to_companies: 'العودة إلى الشركات',
         add_to_pharmacy: '➕ إضافة إلى الصيدلية', add_expiry: 'أدخل تاريخ الانتهاء للدواء الجديد',
         added_to_pharmacy: 'تمت إضافة الدواء إلى الصيدلية', select_all: 'تحديد الكل',
-        deselect_all: 'إلغاء الكل', long_press_guide: 'لتحديد دواء: اضغط مطولاً (0.8 ثانية) ثم اسحب.',
+        deselect_all: 'إلغاء الكل', long_press_guide: 'لتحديد دواء: اضغط مطولاً على أي دواء (0.8 ثانية) ثم اسحب إصبعك لأعلى/أسفل لتحديد عدة أدوية.',
         first_visit_welcome: 'مرحباً بك في مدير الصيدلية', dosage_form: 'الشكل الدوائي',
         dosage: 'الجرعة', deleted_items: 'سلة المحذوفات', restore: 'استعادة',
         delete_permanently: 'حذف نهائي', empty_trash: 'تفريغ السلة',
         restore_confirm: 'استعادة الدواء؟', delete_permanently_confirm: 'حذف نهائي للدواء؟',
         empty_trash_confirm: 'تفريغ سلة المحذوفات بالكامل؟', expiry1: 'تاريخ الانتهاء 1',
         expiry2: 'تاريخ الانتهاء 2', expiry3: 'تاريخ الانتهاء 3',
-        medicine_exists_in_pharmacy: 'هذا الدواء موجود بالفعل. هل تريد إضافته بصلاحية جديدة؟',
+        medicine_exists_in_pharmacy: 'هذا الدواء موجود بالفعل في أدوية الصيدلية. هل تريد إضافته بصلاحية جديدة؟',
         yes: 'نعم', no: 'لا', notification_days: 'تنبيه قبل (أيام)',
         default_expiry: 'الصلاحية الافتراضية للإضافة', one_year: 'سنة واحدة', two_years: 'سنتان',
         three_years: '3 سنوات', five_years: '5 سنوات', manual: 'يدوي (بدون تعبئة)',
@@ -76,7 +76,7 @@ const translations = {
         settings_title: 'Settings', about_app: 'About App', language: 'Language',
         dark_mode: 'Dark Mode', backup_restore: 'Backup & Restore', export_db: 'Export JSON',
         import_db: 'Import JSON', export_csv: 'Export CSV', export_pdf: 'Export PDF',
-        about_text: 'Pharmacy Manager Pro\nAdvanced version.',
+        about_text: 'Pharmacy Manager Pro\nAdvanced version with database support, export, notifications, and batch delete.',
         save: 'Save', cancel: 'Cancel', name: 'Name', search_placeholder: 'Search...',
         filter_company: 'Company Name', sort_by: 'Sort by', closest_expiry: 'Closest expiry',
         farthest_expiry: 'Farthest expiry', name_asc: 'Name A-Z', name_desc: 'Name Z-A',
@@ -98,24 +98,25 @@ const translations = {
         barcode_label: 'Barcode (optional)', back_to_companies: 'Back to Companies',
         add_to_pharmacy: '➕ Add to Pharmacy', add_expiry: 'Enter expiry date for the new medicine',
         added_to_pharmacy: 'Medicine added to pharmacy', select_all: 'Select All',
-        deselect_all: 'Deselect All', long_press_guide: 'To select: press and hold (0.8 sec) then drag.',
+        deselect_all: 'Deselect All', long_press_guide: 'To select medicine: press and hold any medicine (0.8 sec), then drag up/down to select multiple.',
         first_visit_welcome: 'Welcome to Pharmacy Manager', dosage_form: 'Dosage Form',
         dosage: 'Dosage', deleted_items: 'Deleted Items', restore: 'Restore',
         delete_permanently: 'Delete Permanently', empty_trash: 'Empty Trash',
-        restore_confirm: 'Restore medicine?', delete_permanently_confirm: 'Permanently delete?',
+        restore_confirm: 'Restore medicine?', delete_permanently_confirm: 'Permanently delete medicine?',
         empty_trash_confirm: 'Empty trash completely?', expiry1: 'Expiry Date 1',
         expiry2: 'Expiry Date 2', expiry3: 'Expiry Date 3',
-        medicine_exists_in_pharmacy: 'Medicine already exists. Add with new expiry?',
+        medicine_exists_in_pharmacy: 'This medicine already exists in pharmacy. Do you want to add it with a new expiry date?',
         yes: 'Yes', no: 'No', notification_days: 'Notify before (days)',
         default_expiry: 'Default expiry for addition', one_year: 'One year', two_years: 'Two years',
         three_years: '3 years', five_years: '5 years', manual: 'Manual (no auto-fill)',
         notification_set: 'Notification settings saved', default_expiry_set: 'Default expiry saved',
-        add_selected_to_pharmacy: 'Add selected to pharmacy', please_enter_expiry: 'Enter expiry: ',
-        batch_add_success: 'Medicines added to pharmacy', search_history: 'Search History',
-        change_color: 'Change App Color'
+        add_selected_to_pharmacy: 'Add selected medicines to pharmacy',
+        please_enter_expiry: 'Enter expiry date for medicine: ', batch_add_success: 'Medicines added to pharmacy',
+        search_history: 'Search History', change_color: 'Change App Color'
     }
 };
 
+// ========== المتغيرات العامة ==========
 let currentLang = localStorage.getItem('appLang') || 'ar';
 let currentPage = 'home';
 let searchQuery = '';
@@ -148,8 +149,6 @@ let selectedCategories = new Set();
 let batchMode = false;
 let currentCompaniesSearchTerm = '';
 let currentCompaniesSortType = 'alpha';
-let currentCategoriesSearchTerm = '';
-let currentCategoriesSortType = 'alpha';
 
 // ========== دوال مساعدة ==========
 function t(key, ...args) {
@@ -191,6 +190,7 @@ function applyAppColor(color) {
     const root = document.documentElement;
     root.style.setProperty('--primary', color.primary);
     root.style.setProperty('--primary-dark', color.primaryDark);
+    root.style.setProperty('--primary-light', color.primaryLight);
     const metaTheme = document.getElementById('themeColorMeta');
     if (metaTheme) metaTheme.setAttribute('content', color.primary);
     localStorage.setItem('appColor', JSON.stringify(color));
@@ -338,7 +338,18 @@ function updateAllText() {
     else if (currentPage === 'deleted') titleKey = 'deleted_items';
     const titleDiv = document.getElementById('appTitle');
     if (titleDiv) titleDiv.innerHTML = t(titleKey);
-    document.body.classList.toggle('home-page', currentPage === 'home');
+    const backBtn = document.getElementById('backBtn');
+    const settingsBtn = document.getElementById('settingsHeaderBtn');
+    const notifBtn = document.getElementById('notifBtn');
+    if (currentPage === 'home') {
+        if (backBtn) backBtn.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'block';
+        if (notifBtn) notifBtn.style.display = 'block';
+    } else {
+        if (backBtn) backBtn.style.display = 'block';
+        if (settingsBtn) settingsBtn.style.display = 'none';
+        if (notifBtn) notifBtn.style.display = 'none';
+    }
     if (currentPage === 'home') renderHome();
     else if (currentPage === 'all') renderAllMedicines();
     else if (currentPage === 'pharmacy') renderPharmacyMedicines();
@@ -412,7 +423,6 @@ function enhanceSearchInput(input, pageKey) {
         searchBtn.addEventListener('click', () => { const q = input.value.trim(); if (q) performSearch(q, pageKey); suggestionsDiv.classList.remove('show'); });
     }
 }
-
 // ========== دوال عرض الأدوية والترحيل ==========
 function renderMedications(list, showDeleteButton = true) {
     const container = document.getElementById('contentList');
@@ -652,7 +662,7 @@ async function getFilteredAndSorted() {
     else if(sortBy === 'date_desc') list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     return list;
 }
-// ========== دوال الشركات والتصنيفات (مع الحفاظ على البحث والفرز أثناء التحديد الجماعي) ==========
+// ========== دوال الشركات والتصنيفات (مع التعديل الجماعي) ==========
 function toggleBatchMode() {
     batchMode = !batchMode;
     if (batchMode) {
@@ -691,7 +701,7 @@ function toggleSelectCategory(name) {
     updateBatchRenameCategoriesCount();
 }
 
-// ========== التعديل الجماعي للشركات (تم إصلاحه) ==========
+// ========== إصلاح دمج الشركات (تحديث جميع الأدوية) ==========
 async function batchRenameCompanies() {
     if (!selectedCompanies.size) return alert('لم يتم تحديد أي شركة');
     const newName = prompt('أدخل الاسم الجديد للشركات المحددة:');
@@ -786,7 +796,6 @@ async function batchDeleteCategories() {
     } catch (e) { alert('خطأ'); } finally { hideLoading(); }
 }
 
-// ========== عرض الشركات مع الحفاظ على البحث والفرز ==========
 async function renderCompaniesPage() {
     if (currentCompany) return showMedicinesByCompany(currentCompany);
     batchMode = false;
@@ -2058,3 +2067,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchPage('home');
     checkAndSendExpiryNotifications();
 });
+
