@@ -1,3 +1,4 @@
+/* الألوان الأساسية سيتم التحكم بها عبر JS */
 :root {
     --primary: #2c7da0;
     --primary-dark: #1f5068;
@@ -37,6 +38,7 @@ body {
     height: 100vh;
     overflow: hidden;
 }
+/* الهيدر الثابت */
 .app-header {
     background: var(--primary);
     color: white;
@@ -52,7 +54,6 @@ body {
 .app-title {
     font-size: 1.2rem;
     font-weight: bold;
-    cursor: pointer;
     text-align: center;
     flex: 1;
 }
@@ -69,42 +70,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: 0.2s;
 }
 .header-btn:hover {
     background: rgba(255,255,255,0.2);
 }
-.back-btn {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    border-radius: 40px;
-    padding: 8px 18px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: 0.2s;
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+.settings-btn {
+    order: 1;
 }
-.back-btn::before {
-    content: "←";
-    font-size: 18px;
-}
-.back-btn:hover {
-    background: rgba(255,255,255,0.4);
-    transform: translateY(-50%) scale(1.02);
-}
-body.home-page .notif-btn {
-    display: flex;
-}
-body:not(.home-page) .notif-btn {
-    display: none;
+.notif-btn {
+    order: 3;
+    position: relative;
 }
 .badge {
     position: absolute;
@@ -120,12 +96,43 @@ body:not(.home-page) .notif-btn {
     align-items: center;
     justify-content: center;
 }
+/* زر العودة */
+.back-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 100;
+    transition: 0.2s;
+}
+.back-btn::before {
+    content: "←";
+    font-size: 18px;
+}
+.back-btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-dark);
+}
+/* المحتوى الرئيسي */
 #pageContent {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
     scroll-behavior: smooth;
+    height: calc(100vh - 60px);
 }
+/* البحث */
 .search-container {
     position: relative;
     width: 100%;
@@ -192,6 +199,7 @@ body:not(.home-page) .notif-btn {
 .suggestion-item:hover {
     background: var(--bg);
 }
+/* شريط الفلاتر الأفقي */
 .filters-bar {
     display: flex;
     flex-wrap: wrap;
@@ -213,6 +221,7 @@ body:not(.home-page) .notif-btn {
     cursor: pointer;
     white-space: nowrap;
 }
+/* بطاقات الأدوية */
 .content-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -229,6 +238,7 @@ body:not(.home-page) .notif-btn {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     cursor: pointer;
     border: 1px solid var(--border);
+    transition: 0.2s;
 }
 .med-card.selected {
     background: var(--primary);
@@ -324,6 +334,7 @@ body:not(.home-page) .notif-btn {
     background: rgba(255,255,255,0.5);
     border-radius: 1px;
 }
+/* الإحصائيات */
 .stats-box {
     background: var(--card-bg);
     border-radius: 20px;
@@ -363,6 +374,7 @@ body:not(.home-page) .notif-btn {
 .main-btn:hover {
     background: var(--primary-dark);
 }
+/* النوافذ المنبثقة */
 .modal {
     display: none;
     position: fixed;
@@ -385,6 +397,9 @@ body:not(.home-page) .notif-btn {
     padding: 20px;
     position: relative;
     border: 1px solid var(--border);
+}
+.small-modal .modal-content {
+    max-width: 350px;
 }
 .close-modal {
     position: absolute;
@@ -495,6 +510,7 @@ body:not(.home-page) .notif-btn {
     opacity: 0.5;
     cursor: not-allowed;
 }
+/* الشركات والتصنيفات */
 .companies-grid, .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -515,6 +531,7 @@ body:not(.home-page) .notif-btn {
     justify-content: center;
     align-items: center;
     gap: 8px;
+    transition: 0.2s;
 }
 .company-card.selected, .category-card.selected {
     background: var(--primary);
@@ -598,6 +615,7 @@ body.dark .medicine-count {
     cursor: pointer;
     font-weight: bold;
 }
+/* الإشعارات */
 .notification-item {
     background: var(--card-bg);
     border-radius: 20px;
@@ -612,6 +630,7 @@ body.dark .medicine-count {
     font-size: 0.7rem;
     opacity: 0.6;
 }
+/* تبويبات الاستكشاف */
 .explore-tabs {
     display: flex;
     gap: 8px;
@@ -639,88 +658,72 @@ body.dark .medicine-count {
 .tab-content.active {
     display: block;
 }
-.settings-menu {
+/* بطاقات الإعدادات */
+.settings-cards {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
-.settings-menu-item {
+.settings-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 60px;
-    padding: 12px 16px;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.settings-card:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(-5px);
+}
+.settings-card-left {
     display: flex;
     align-items: center;
     gap: 12px;
-    cursor: pointer;
 }
-.settings-menu-item:hover {
-    background: var(--primary);
-    color: white;
-}
-.settings-menu-icon {
-    font-size: 22px;
-    width: 36px;
-    text-align: center;
-}
-.settings-menu-text {
-    flex: 1;
-    font-weight: bold;
-}
-.settings-menu-arrow {
-    font-size: 18px;
-}
-.settings-page-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-}
-.settings-back-btn {
-    background: none;
-    border: none;
+.settings-card-icon {
     font-size: 24px;
-    cursor: pointer;
 }
-.import-export-grid {
+.settings-card-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+.settings-card-arrow {
+    font-size: 20px;
+}
+/* خيارات اللغة والألوان */
+.language-options, .color-options {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-top: 16px;
 }
-.import-export-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-}
-.history-category {
-    margin-bottom: 20px;
-}
-.history-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
-}
-.history-item {
-    background: var(--bg);
-    border-radius: 30px;
-    padding: 4px 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-}
-.delete-history {
-    background: none;
+.lang-option, .color-option {
+    background: var(--primary);
+    color: white;
     border: none;
+    border-radius: 40px;
+    padding: 12px;
+    font-size: 16px;
     cursor: pointer;
-    color: var(--danger);
-    font-weight: bold;
+    text-align: center;
 }
+.color-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+/* تفاصيل الدواء */
 .med-detail-item {
     background: var(--bg);
     padding: 8px 12px;
@@ -737,6 +740,7 @@ body.dark .medicine-count {
     margin-top: 12px;
     text-align: center;
 }
+/* تحميل */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -767,6 +771,7 @@ body.dark .medicine-count {
     margin-top: 12px;
     font-size: 14px;
 }
+/* توافق الجوال */
 @media (max-width: 600px) {
     .content-list {
         grid-template-columns: 1fr;
@@ -777,5 +782,11 @@ body.dark .medicine-count {
     }
     .companies-grid, .categories-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+    .back-btn {
+        bottom: 16px;
+        right: 16px;
+        padding: 10px 16px;
+        font-size: 14px;
     }
 }
