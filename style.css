@@ -52,11 +52,6 @@ body {
     z-index: 10;
     width: 100%;
 }
-.header-left, .header-right {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
 .app-title {
     font-size: 1.2rem;
     font-weight: bold;
@@ -82,9 +77,6 @@ body {
 .header-btn:hover {
     background: rgba(255,255,255,0.2);
 }
-.back-header-btn {
-    font-size: 24px;
-}
 .badge {
     position: absolute;
     top: 0;
@@ -99,6 +91,33 @@ body {
     align-items: center;
     justify-content: center;
 }
+.back-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 100;
+    transition: 0.2s;
+}
+.back-btn::before {
+    content: "←";
+    font-size: 18px;
+}
+.back-btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-dark);
+}
 #pageContent {
     flex: 1;
     overflow-y: auto;
@@ -106,6 +125,7 @@ body {
     height: calc(100vh - 60px);
     width: 100%;
     overflow-x: hidden;
+    box-sizing: border-box;
 }
 .search-container {
     position: relative;
@@ -811,6 +831,16 @@ body.dark .medicine-count {
 .import-export-buttons {
     display: flex;
     gap: 8px;
+}
+.datetime-box {
+    text-align: center;
+    margin-top: 16px;
+    padding: 8px;
+    background: var(--card-bg);
+    border-radius: 30px;
+    font-size: 12px;
+    opacity: 0.8;
+    border: 1px solid var(--border);
 }
 .loading-overlay {
     position: fixed;
