@@ -27,7 +27,7 @@ function stopScannerAndClose() {
     }
 }
 
-async function startBarcodeScanner(targetInputId) {
+async function startBarcodeScanner(targetInputId, retryCount = 0) {
     const modal = document.getElementById('barcodeScannerModal');
     const video = document.getElementById('scannerVideo');
     const resultDiv = document.getElementById('scannerResult');
@@ -37,7 +37,11 @@ async function startBarcodeScanner(targetInputId) {
     if (!hasPermission) {
         resultDiv.innerHTML = '❌ لا يمكن الوصول إلى الكاميرا. يرجى السماح بالوصول.';
         modal.style.display = 'flex';
-        alert('لا يمكن الوصول إلى الكاميرا. الرجاء السماح بالوصول في إعدادات المتصفح.');
+        if (retryCount < 2) {
+            setTimeout(() => startBarcodeScanner(targetInputId, retryCount + 1), 1000);
+        } else {
+            alert('لا يمكن الوصول إلى الكاميرا. الرجاء السماح بالوصول في إعدادات المتصفح.');
+        }
         return;
     }
     
@@ -50,6 +54,8 @@ async function startBarcodeScanner(targetInputId) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     const QuaggaLib = window.Quagga;
     if (!QuaggaLib) {
@@ -65,8 +71,8 @@ async function startBarcodeScanner(targetInputId) {
             target: video,
             constraints: {
                 facingMode: "environment",
-                width: { min: 640, ideal: 1280 },
-                height: { min: 480, ideal: 720 }
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 }
             }
         },
         decoder: {
@@ -76,9 +82,13 @@ async function startBarcodeScanner(targetInputId) {
         numOfWorkers: navigator.hardwareConcurrency || 2
     }, (err) => {
         if (err) {
+            console.error('Quagga init error:', err);
             resultDiv.innerHTML = '❌ تعذر فتح الكاميرا. استخدم الإدخال اليدوي.';
             const manualBtn = document.getElementById('manualBarcodeBtn');
             if (manualBtn) manualBtn.style.display = 'inline-block';
+            if (retryCount < 2) {
+                setTimeout(() => startBarcodeScanner(targetInputId, retryCount + 1), 1500);
+            }
             return;
         }
         QuaggaLib.start();
@@ -89,6 +99,7 @@ async function startBarcodeScanner(targetInputId) {
         if (manualBtn) manualBtn.style.display = 'inline-block';
     });
     
+    QuaggaLib.offDetected();
     QuaggaLib.onDetected((data) => {
         if (!scannerActive) return;
         const code = data.codeResult.code;
@@ -129,6 +140,8 @@ async function startScannerForSearch() {
         video.srcObject = null;
     }
     
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     const QuaggaLib = window.Quagga;
     if (!QuaggaLib) {
         resultDiv.innerHTML = '❌ مكتبة الباركود غير متوفرة.';
@@ -143,8 +156,8 @@ async function startScannerForSearch() {
             target: video,
             constraints: {
                 facingMode: "environment",
-                width: { min: 640, ideal: 1280 },
-                height: { min: 480, ideal: 720 }
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 }
             }
         },
         decoder: {
@@ -168,6 +181,7 @@ async function startScannerForSearch() {
         if (manualBtn) manualBtn.style.display = 'inline-block';
     });
     
+    QuaggaLib.offDetected();
     QuaggaLib.onDetected(async (data) => {
         if (!scannerActive) return;
         const code = data.codeResult.code;
