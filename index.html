@@ -20,14 +20,9 @@
 </head>
 <body>
     <div class="app-header">
-        <div class="header-left">
-            <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
-            <button id="backBtn" class="header-btn back-header-btn" style="display: none;">←</button>
-        </div>
+        <button id="settingsHeaderBtn" class="header-btn settings-btn">⚙️</button>
         <div id="appTitle" class="app-title">Pharmacy Manager</div>
-        <div class="header-right">
-            <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
-        </div>
+        <button id="notifBtn" class="header-btn notif-btn">🔔<span id="notifBadge" class="badge"></span></button>
     </div>
     <div id="pageContent" class="page-content"></div>
 
@@ -165,6 +160,9 @@
             <div class="color-options" id="colorOptions"></div>
         </div>
     </div>
+
+    <!-- زر العودة -->
+    <button id="backBtn" class="back-btn" style="display: none;">← العودة</button>
 
     <!-- نافذة التحميل -->
     <div id="loadingOverlay" class="loading-overlay">
