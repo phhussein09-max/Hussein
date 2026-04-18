@@ -4,16 +4,13 @@ if (typeof Dexie === 'undefined') {
     throw new Error('Dexie not loaded');
 }
 
-// ========== IndexedDB مع ترقية الإصدار (لحل مشكلة deletedMeds) ==========
 const db = new Dexie('PharmacyDB');
-// إصدار 2 مع إضافة الفهارس المطلوبة
 db.version(2).stores({
     meds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
     deletedMeds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
     notifications: '++id, message, date, read',
     notificationLog: '++id, medId, lastNotified, count'
 });
-// احتفاظ بالإصدار 1 للتوافق مع البيانات القديمة (سيتم ترقيتها تلقائياً)
 db.version(1).stores({
     meds: '++id, name, expiry, type, category, company, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
     deletedMeds: '++id, name, expiry, type, category, scientificName, origin, image, barcode, dosageForm, dosage, createdAt',
@@ -23,7 +20,6 @@ db.version(1).stores({
 
 const MED_TYPES = { GENERAL: 'general', PHARMACY: 'pharmacy' };
 
-// ========== الألوان المتاحة ==========
 const availableColors = [
     { name: 'أزرق', nameEn: 'Blue', primary: '#2c7da0', primaryDark: '#1f5068', primaryLight: '#4a9ec4' },
     { name: 'أخضر', nameEn: 'Green', primary: '#2a9d8f', primaryDark: '#1f6e63', primaryLight: '#4cb8aa' },
@@ -33,7 +29,6 @@ const availableColors = [
     { name: 'أحمر', nameEn: 'Red', primary: '#e74c3c', primaryDark: '#b33a2c', primaryLight: '#ec7063' }
 ];
 
-// ========== الترجمات ==========
 const translations = {
     ar: {
         home_title: 'إدارة صيدليتي', inbox_title: 'صندوق الوارد', explore_title: 'استكشف',
@@ -198,6 +193,7 @@ function applyAppColor(color) {
     const metaTheme = document.getElementById('themeColorMeta');
     if (metaTheme) metaTheme.setAttribute('content', color.primary);
     localStorage.setItem('appColor', JSON.stringify(color));
+    if (currentPage === 'home' && chart) updateBarChart();
 }
 function loadSavedColor() {
     const saved = localStorage.getItem('appColor');
@@ -425,7 +421,6 @@ function enhanceSearchInput(input, pageKey) {
     }
 }
 
-// ========== دوال عرض الأدوية والترحيل ==========
 function renderMedications(list, showDeleteButton = true) {
     const container = document.getElementById('contentList');
     if (!container) return;
@@ -482,7 +477,6 @@ function renderPaginationControls() {
 function goToPage(page) { currentPageNumber = page; renderMedicationsWithPagination(currentFilteredList, true); window.scrollTo({top:0,behavior:'smooth'}); }
 async function refreshWithPagination(list, showDeleteButton = true) { currentPageNumber = 1; await renderMedicationsWithPagination(list, showDeleteButton); }
 
-// ========== دوال الحذف وسلة المحذوفات ==========
 async function moveToDeleted(medId) {
     const med = await db.meds.get(medId);
     if (med) { await db.deletedMeds.add(med); await db.meds.delete(medId); selectedMeds.delete(medId); if (currentPage==='all') renderAllMedicines(); else if (currentPage==='pharmacy') renderPharmacyMedicines(); else if (currentPage==='expiring') renderExpiringSoonPage(); updateBarChart(); }
@@ -508,7 +502,6 @@ async function renderDeletedItems() {
     });
 }
 
-// ========== دوال اللمس والتحديد المتعدد للأدوية ==========
 function handleTouchStart(e, id, card) {
     if (selectionMode) return;
     touchStartTime = Date.now();
@@ -548,7 +541,6 @@ function deselectAllMeds() { document.querySelectorAll('.med-card').forEach(card
 async function batchDelete() { if(selectedMeds.size===0) return alert(t('batch_delete_confirm',0)); if(confirm(t('batch_delete_confirm',selectedMeds.size))){ showLoading('جاري حذف الأدوية...'); try{ for(let id of selectedMeds){ const med = await db.meds.get(id); if(med) await db.deletedMeds.add(med); await db.meds.delete(id); } selectedMeds.clear(); selectionMode=false; document.querySelectorAll('.med-card .checkbox').forEach(cb=>cb.style.display='none'); if(currentPage==='all') renderAllMedicines(); else if(currentPage==='pharmacy') renderPharmacyMedicines(); updateBarChart(); }finally{ hideLoading(); } } }
 async function batchAddToPharmacy() { if(selectedMeds.size===0) return; const medicines = []; for(let id of selectedMeds){ const med = await db.meds.get(id); if(med) medicines.push(med); } if(!medicines.length) return; showLoading('جاري إضافة الأدوية إلى الصيدلية...'); let added=0; for(let med of medicines){ const newExpiry = prompt(t('please_enter_expiry')+med.name, new Date(Date.now()+30*86400000).toISOString().split('T')[0]); if(!newExpiry) continue; const newMed = { name:med.name, expiry:newExpiry, scientificName:med.scientificName||'', company:med.company||'', origin:med.origin||'', type:MED_TYPES.PHARMACY, category:med.category||'', barcode:med.barcode||'', image:med.image||null, dosageForm:med.dosageForm||'', dosage:med.dosage||'', createdAt:new Date().toISOString() }; await db.meds.add(newMed); added++; await addMedicineToGeneralIfNotExists(newMed); } hideLoading(); if(added>0){ const toast = document.createElement('div'); toast.className='offline-toast'; toast.innerText = t('batch_add_success')+` (${added})`; document.body.appendChild(toast); setTimeout(()=>toast.remove(),2000); if(currentPage==='all') renderAllMedicines(); else if(currentPage==='pharmacy') renderPharmacyMedicines(); } else alert('لم يتم إضافة أي دواء'); }
 
-// ========== الصفحة الرئيسية ==========
 function renderHome() {
     const container = document.getElementById('pageContent');
     container.innerHTML = `
@@ -581,7 +573,33 @@ function renderHome() {
     updateBarChart();
     showStats();
     showFirstTimeGuidance();
+    const statsDiv = document.getElementById('stats');
+    if (statsDiv && !document.getElementById('realDateTime')) {
+        const dateTimeDiv = document.createElement('div');
+        dateTimeDiv.id = 'realDateTime';
+        dateTimeDiv.className = 'datetime-box';
+        statsDiv.appendChild(dateTimeDiv);
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    } else if (document.getElementById('realDateTime')) {
+        updateDateTime();
+    }
 }
+
+function updateDateTime() {
+    const now = new Date();
+    const options = { 
+        year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+    };
+    const dateTimeStr = now.toLocaleString(currentLang === 'ar' ? 'ar-IQ' : 'en-US', options);
+    const dateTimeElement = document.getElementById('realDateTime');
+    if (dateTimeElement) {
+        dateTimeElement.innerHTML = `🕒 ${dateTimeStr}`;
+    }
+}
+
 async function updateBarChart() {
     const ctx = document.getElementById('expiryBarChart')?.getContext('2d');
     if(!ctx) return;
@@ -603,66 +621,6 @@ async function showStats() {
     const expiring30 = meds.filter(m=>{let d=getDaysRemaining(m.expiry); return d>=0 && d<=30;}).length;
     const pharmacyCount = meds.filter(m=>m.type===MED_TYPES.PHARMACY).length;
     document.getElementById('stats').innerHTML = `<div class="stats-box"><div>${t('total')}: <strong>${total}</strong></div><div>${t('pharmacy_count')}: <strong>${pharmacyCount}</strong></div><div>${t('expired')}: <strong style="color:var(--danger)">${expired}</strong></div><div>${t('expiring_30')}: <strong style="color:var(--warning)">${expiring30}</strong></div></div>`;
-}
-
-// ========== صفحة كل الأدوية (بدون expiry) ==========
-async function renderAllMedicines() {
-    typeFilter = MED_TYPES.GENERAL;
-    const container = document.getElementById('pageContent');
-    container.innerHTML = `
-        <div class="search-container"><div class="search-wrapper"><input type="text" id="search" placeholder="${t('search_placeholder')}"><button class="search-btn">${t('search_btn')}</button><button id="barcodeSearchBtn" class="barcode-search-btn">📷 باركود</button></div><div id="suggestionsBox" class="suggestions-list"></div></div>
-        <div class="filters-bar"><select id="sortBy"><option value="expiry_asc">${t('closest_expiry')}</option><option value="expiry_desc">${t('farthest_expiry')}</option><option value="name_asc">${t('name_asc')}</option><option value="name_desc">${t('name_desc')}</option><option value="date_desc">${t('newest_first')}</option></select><button id="selectAllBtn" class="select-all-btn" style="display:none;">${t('select_all')}</button><button id="deselectAllBtn" class="deselect-all-btn" style="display:none;">${t('deselect_all')}</button><button id="batchAddToPharmacyBtn" class="plus-icon-btn" style="display:none;">➕ ${t('batch_add_to_pharmacy')}</button><button id="batchDeleteBtn" class="batch-delete-btn" style="display:none;">${t('batch_delete')}</button><button id="addGeneralMedBtn" class="plus-icon-btn">➕ ${t('add_med')}</button></div>
-        <div class="content-list" id="contentList"></div><div id="stats"></div>
-    `;
-    const searchInput = document.getElementById('search'), searchBtn = container.querySelector('.search-btn'), suggestionsBox = document.getElementById('suggestionsBox'), barcodeBtn = document.getElementById('barcodeSearchBtn'), sortSelect = document.getElementById('sortBy'), batchBtn = document.getElementById('batchDeleteBtn'), selectAllBtn = document.getElementById('selectAllBtn'), deselectAllBtn = document.getElementById('deselectAllBtn'), batchAddBtn = document.getElementById('batchAddToPharmacyBtn'), addGeneralBtn = document.getElementById('addGeneralMedBtn');
-    if(batchBtn) batchBtn.addEventListener('click', batchDelete);
-    if(selectAllBtn) selectAllBtn.addEventListener('click', selectAllMeds);
-    if(deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllMeds);
-    if(batchAddBtn) batchAddBtn.addEventListener('click', batchAddToPharmacy);
-    if(addGeneralBtn) addGeneralBtn.addEventListener('click', showAddGeneralFormModal);
-    if(searchBtn && searchInput) searchBtn.addEventListener('click', () => { const q = searchInput.value.trim(); if(q) performSearch(q, 'all'); suggestionsBox.classList.remove('show'); });
-    if(barcodeBtn) barcodeBtn.addEventListener('click', () => window.startScannerForSearch());
-    if(sortSelect){ sortSelect.value = sortBy; sortSelect.addEventListener('change', () => { sortBy = sortSelect.value; renderAllMedicines(); }); }
-    if(searchInput){ searchInput.addEventListener('input', () => updateSearchSuggestions(searchInput, suggestionsBox, 'medicines')); searchInput.addEventListener('keypress', (e) => { if(e.key==='Enter'){ const q = searchInput.value.trim(); if(q) performSearch(q, 'all'); suggestionsBox.classList.remove('show'); } }); searchInput.addEventListener('blur', () => setTimeout(()=>suggestionsBox.classList.remove('show'),200)); }
-    const list = await getFilteredAndSorted();
-    await refreshWithPagination(list, true);
-    showStats();
-}
-
-// ========== صفحة أدوية الصيدلية ==========
-async function renderPharmacyMedicines() {
-    typeFilter = MED_TYPES.PHARMACY;
-    const container = document.getElementById('pageContent');
-    container.innerHTML = `
-        <div class="search-container"><div class="search-wrapper"><input type="text" id="search" placeholder="${t('search_placeholder')}"><button class="search-btn">${t('search_btn')}</button><button id="barcodeSearchBtn" class="barcode-search-btn">📷 باركود</button></div><div id="suggestionsBox" class="suggestions-list"></div></div>
-        <div class="filters-bar"><select id="sortBy"><option value="expiry_asc">${t('closest_expiry')}</option><option value="expiry_desc">${t('farthest_expiry')}</option><option value="name_asc">${t('name_asc')}</option><option value="name_desc">${t('name_desc')}</option><option value="date_desc">${t('newest_first')}</option></select><button id="selectAllBtn" class="select-all-btn" style="display:none;">${t('select_all')}</button><button id="deselectAllBtn" class="deselect-all-btn" style="display:none;">${t('deselect_all')}</button><button id="batchDeleteBtn" class="batch-delete-btn" style="display:none;">${t('batch_delete')}</button><button id="addMedBtn" class="plus-icon-btn">➕ ${t('add_med')}</button><button id="recycleBinBtn" class="recycle-bin-btn">🗑️ سلة المحذوفات</button></div>
-        <div class="content-list" id="contentList"></div><div id="stats"></div>
-    `;
-    document.getElementById('addMedBtn')?.addEventListener('click', showAddFormModal);
-    document.getElementById('recycleBinBtn')?.addEventListener('click', () => switchPage('deleted'));
-    const searchInput = document.getElementById('search'), searchBtn = container.querySelector('.search-btn'), suggestionsBox = document.getElementById('suggestionsBox'), barcodeBtn = document.getElementById('barcodeSearchBtn'), sortSelect = document.getElementById('sortBy'), batchBtn = document.getElementById('batchDeleteBtn'), selectAllBtn = document.getElementById('selectAllBtn'), deselectAllBtn = document.getElementById('deselectAllBtn');
-    if(batchBtn) batchBtn.addEventListener('click', batchDelete);
-    if(selectAllBtn) selectAllBtn.addEventListener('click', selectAllMeds);
-    if(deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllMeds);
-    if(searchBtn && searchInput) searchBtn.addEventListener('click', () => { const q = searchInput.value.trim(); if(q) performSearch(q, 'pharmacy'); suggestionsBox.classList.remove('show'); });
-    if(barcodeBtn) barcodeBtn.addEventListener('click', () => window.startScannerForSearch());
-    if(sortSelect){ sortSelect.value = sortBy; sortSelect.addEventListener('change', () => { sortBy = sortSelect.value; renderPharmacyMedicines(); }); }
-    if(searchInput){ searchInput.addEventListener('input', () => updateSearchSuggestions(searchInput, suggestionsBox, 'medicines')); searchInput.addEventListener('keypress', (e) => { if(e.key==='Enter'){ const q = searchInput.value.trim(); if(q) performSearch(q, 'pharmacy'); suggestionsBox.classList.remove('show'); } }); searchInput.addEventListener('blur', () => setTimeout(()=>suggestionsBox.classList.remove('show'),200)); }
-    const list = await getFilteredAndSorted();
-    await refreshWithPagination(list, true);
-    showStats();
-}
-
-async function getFilteredAndSorted() {
-    let list = await db.meds.toArray();
-    if(searchQuery.trim()){ const q = searchQuery.toLowerCase(); list = list.filter(m => m.name.toLowerCase().includes(q) || (m.scientificName && m.scientificName.toLowerCase().includes(q)) || (m.company && m.company.toLowerCase().includes(q)) || (m.barcode && m.barcode.toLowerCase().includes(q))); }
-    if(typeFilter !== 'all') list = list.filter(m => m.type === typeFilter);
-    if(sortBy === 'expiry_asc') list.sort((a,b)=>getDaysRemaining(a.expiry)-getDaysRemaining(b.expiry));
-    else if(sortBy === 'expiry_desc') list.sort((a,b)=>getDaysRemaining(b.expiry)-getDaysRemaining(a.expiry));
-    else if(sortBy === 'name_asc') list.sort((a,b)=>a.name.localeCompare(b.name));
-    else if(sortBy === 'name_desc') list.sort((a,b)=>b.name.localeCompare(a.name));
-    else if(sortBy === 'date_desc') list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-    return list;
 }
 // ========== دوال الشركات والتصنيفات (مع التعديل الجماعي) ==========
 function toggleBatchMode() {
@@ -821,7 +779,7 @@ async function renderCompaniesPage() {
     }
     container.innerHTML = `
         <div class="search-container"><div class="search-wrapper"><input id="companySearch" placeholder="🔍 بحث عن شركة..."><button id="searchCompanyBtn">${t('search_btn')}</button></div><div id="suggestionsBox" class="suggestions-list"></div></div>
-        <div class="companies-sort-bar" style="display:flex; gap:10px; margin:12px 0; flex-wrap:wrap;"><label>${t('companies_sort')}</label><select id="companiesSort"><option value="alpha">${t('alphabetical')}</option><option value="count_desc">${t('by_med_count')} (تنازلي)</option><option value="count_asc">${t('by_med_count')} (تصاعدي)</option><option value="popular">${t('popular')}</option></select><button id="addCompanyBtn" class="main-btn">➕ إضافة شركة جديدة</button><button id="batchModeBtn" class="main-btn" style="background:var(--warning)">📌 تحديد متعدد</button></div>
+        <div class="companies-sort-bar" style="display:flex; gap:10px; margin:12px 0; flex-wrap:wrap;"><label>${t('companies_sort')}</label><select id="companiesSort"><option value="alpha">${t('alphabetical')}</option><option value="count_desc">${t('by_med_count')} (تنازلي)</option><option value="count_asc">${t('by_med_count')} (تصاعدي)</option><option value="popular">${t('popular')}</option></select><button id="addCompanyBtn" class="main-btn">➕ إضافة شركة جديدة</button><button id="batchModeBtn" class="main-btn" style="background:var(--warning)">📌 تحديد متعدد</button><button id="selectAllCompaniesBtn" class="main-btn" style="background:var(--success); display:none;">✅ تحديد الكل</button></div>
         <div id="batchActionsBar" class="batch-actions-bar" style="display:none;"><button id="batchRenameBtn" class="batch-rename-btn">✏️ تعديل جماعي (0)</button><button id="batchDeleteCompaniesBtn" class="batch-delete-entity-btn">🗑️ حذف جماعي</button><button id="batchCancelBtn" class="batch-cancel-btn">إلغاء التحديد</button></div>
         <div id="companiesList"></div>
     `;
@@ -832,6 +790,7 @@ async function renderCompaniesPage() {
     const sortSelect = document.getElementById('companiesSort');
     const addBtn = document.getElementById('addCompanyBtn');
     const batchModeBtn = document.getElementById('batchModeBtn');
+    const selectAllCompaniesBtn = document.getElementById('selectAllCompaniesBtn');
     const batchBar = document.getElementById('batchActionsBar');
     const renameBtn = document.getElementById('batchRenameBtn');
     const deleteBtn = document.getElementById('batchDeleteCompaniesBtn');
@@ -877,16 +836,29 @@ async function renderCompaniesPage() {
             batchMode = !batchMode;
             if (batchMode) {
                 batchBar.style.display = 'flex';
+                if (selectAllCompaniesBtn) selectAllCompaniesBtn.style.display = 'inline-flex';
                 batchModeBtn.style.background = 'var(--success)';
                 batchModeBtn.innerText = '❌ إلغاء التحديد';
                 renderCompaniesInBatchMode();
             } else {
                 batchBar.style.display = 'none';
+                if (selectAllCompaniesBtn) selectAllCompaniesBtn.style.display = 'none';
                 batchModeBtn.style.background = 'var(--warning)';
                 batchModeBtn.innerText = '📌 تحديد متعدد';
                 selectedCompanies.clear();
                 renderCompaniesPage();
             }
+        });
+    }
+    if (selectAllCompaniesBtn) {
+        selectAllCompaniesBtn.addEventListener('click', () => {
+            const currentCompanies = Array.from(document.querySelectorAll('#companiesList .company-card')).map(card => card.getAttribute('data-company'));
+            for (let company of currentCompanies) {
+                if (!selectedCompanies.has(company)) {
+                    toggleSelectCompany(company);
+                }
+            }
+            updateBatchRenameBtnCount();
         });
     }
     if (renameBtn) renameBtn.addEventListener('click', batchRenameCompanies);
@@ -1077,6 +1049,7 @@ async function renderCategoriesPage() {
     container.innerHTML = `
         <button class="main-btn" id="addCategoryBtn" style="margin-bottom:16px;">➕ إضافة تصنيف جديد</button>
         <button id="batchModeCategoriesBtn" class="main-btn" style="background:var(--warning); margin-bottom:16px;">📌 تحديد متعدد</button>
+        <button id="selectAllCategoriesBtn" class="main-btn" style="background:var(--success); display:none;">✅ تحديد الكل</button>
         <div id="batchActionsCategoriesBar" class="batch-actions-bar" style="display:none;">
             <button id="batchRenameCategoriesBtn" class="batch-rename-btn">✏️ تعديل جماعي (0)</button>
             <button id="batchDeleteCategoriesBtn" class="batch-delete-entity-btn">🗑️ حذف جماعي</button>
@@ -1086,6 +1059,7 @@ async function renderCategoriesPage() {
     `;
     document.getElementById('addCategoryBtn')?.addEventListener('click', () => addNewCategoryForList());
     const batchModeBtn = document.getElementById('batchModeCategoriesBtn');
+    const selectAllCategoriesBtn = document.getElementById('selectAllCategoriesBtn');
     const batchBar = document.getElementById('batchActionsCategoriesBar');
     const renameBtn = document.getElementById('batchRenameCategoriesBtn');
     const deleteBtn = document.getElementById('batchDeleteCategoriesBtn');
@@ -1096,16 +1070,29 @@ async function renderCategoriesPage() {
             batchMode = !batchMode;
             if (batchMode) {
                 batchBar.style.display = 'flex';
+                if (selectAllCategoriesBtn) selectAllCategoriesBtn.style.display = 'inline-flex';
                 batchModeBtn.style.background = 'var(--success)';
                 batchModeBtn.innerText = '❌ إلغاء التحديد';
                 renderCategoriesInBatchMode(cats, catsMap);
             } else {
                 batchBar.style.display = 'none';
+                if (selectAllCategoriesBtn) selectAllCategoriesBtn.style.display = 'none';
                 batchModeBtn.style.background = 'var(--warning)';
                 batchModeBtn.innerText = '📌 تحديد متعدد';
                 selectedCategories.clear();
                 renderCategoriesPage();
             }
+        });
+    }
+    if (selectAllCategoriesBtn) {
+        selectAllCategoriesBtn.addEventListener('click', () => {
+            const currentCategories = Array.from(document.querySelectorAll('#categoriesGrid .category-card')).map(card => card.getAttribute('data-category'));
+            for (let cat of currentCategories) {
+                if (!selectedCategories.has(cat)) {
+                    toggleSelectCategory(cat);
+                }
+            }
+            updateBatchRenameCategoriesCount();
         });
     }
     if (renameBtn) renameBtn.addEventListener('click', batchRenameCategories);
@@ -2069,3 +2056,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchPage('home');
     checkAndSendExpiryNotifications();
 });
+
